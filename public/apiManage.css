@@ -1,0 +1,44 @@
+a {
+    text-decoration: none;
+}
+
+#container{
+    min-width: 1200px;
+}
+
+.op-btn {
+    margin-left: 9px;
+}
+
+.title{
+    line-height: 40px;
+    vertical-align: middle;
+    padding: 3px 9px;
+    border-bottom: 1px solid #ccc;
+}
+
+.operations{
+    line-height: 36px;
+    padding: 0px 9px;
+    vertical-align: middle;
+}
+
+.url-input{
+    margin-top:9px;
+}
+
+.op-btns{
+    margin-top: 9px;
+    margin-bottom: 3px;
+}
+
+.op-check-btn{
+    margin-top: 3px;
+}
+
+.ellipsis {
+    width: 340px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
