@@ -31,68 +31,20 @@ app.all('*', function (req, res, next) {
 });
 
 const renderFullPage = () => {
-    // return `
-    // <!doctype html>
-    // <html lang="utf-8">
-    // 	<head>
-    // 	<link rel="stylesheet" type="text/css" href="/antd.min.css" />
-    // 	<link rel="stylesheet" type="text/css" href="/apiManage.css" />
-    // 	<script src="/jquery-1.11.1.js"></script>
-    // 	</head>
-    // 	<body>
-    // 		<section id="todoapp" class="todoapp"></section>
-    // 		<script src="./bundle.js"></script>
-    // 	</body>
-    // </html>
-    // `
     return `
-	<!doctype html>
-	<html lang="utf-8">
-		<head>
-		<script src="/jquery-1.11.1.js"></script>
-		<script src="/three.min.js"></script>
-		<style>
-		*{margin:0;padding:0;list-style-type:none;}
-        body {
-            background-color: #fff;
-            margin: 0px;
-            /*overflow: hidden;*/
-            font-family:arial;
-            color:#fff;
-        }
-        
-        #canvas{
-            width:100%;
-            height:500px;
-            overflow: hidden;
-            position:absolute;
-            top:0;
-            left:0;
-            background-color: #1a1724;               
-        }
-        .canvas-wrap{
-            position:relative;
-            
-        }
-        div.canvas-content{
-            position:relative;
-            z-index:2000;
-            color:#fff;
-            text-align:center;
-            padding-top:30px;
-        }
-        </style>
-		</head>
-		<body>
-	        <section class="canvas-wrap">
-
-                <div id="canvas" class="gradient"></div>
-                
-            </section>
-			<script src="./bundle.js"></script>
-		</body>
-	</html>
-	`
+    <!doctype html>
+    <html lang="utf-8">
+    	<head>
+    	<link rel="stylesheet" type="text/css" href="/antd.min.css" />
+    	<link rel="stylesheet" type="text/css" href="/apiManage.css" />
+    	<script src="/jquery-1.11.1.js"></script>
+    	</head>
+    	<body>
+    		<section id="todoapp" class="todoapp"></section>
+    		<script src="./bundle.js"></script>
+    	</body>
+    </html>
+    `
 };
 
 app.get('/', function (req, res) {
