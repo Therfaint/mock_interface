@@ -178,7 +178,7 @@ class JsonFormatter{
 
     // 检查输入是否为字符串
     isString(data){
-        return (data.indexOf('{') === -1 && data.indexOf('[') === -1)
+        return data ? (data.indexOf('{') === -1 && data.indexOf('[') === -1) : false;
     }
 
 }

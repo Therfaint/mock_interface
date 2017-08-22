@@ -56,9 +56,11 @@ app.post('/saveAPI', function (req, res) {
     let api = {
         url: req.body.url,
         param: req.body.param,
+        paramTable: req.body.paramTable,
         method: req.body.method.toUpperCase(),
         createTime: req.body.createTime,
-        json: req.body.json
+        json: req.body.json,
+        jsonTable: req.body.jsonTable,
     };
     db.add(api, function (status) {
         if (status.code === 200) {
@@ -94,7 +96,9 @@ app.post('/updateAPI', function (req, res) {
         url: req.body.url,
         param: req.body.param,
         method: req.body.method,
-        json: req.body.json
+        json: req.body.json,
+        paramTable: req.body.paramTable,
+        jsonTable: req.body.jsonTable
     };
     db.update(id, param, function (status) {
         if (status.code === 200) {

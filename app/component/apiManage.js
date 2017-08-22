@@ -11,16 +11,20 @@ import Table from 'antd/lib/table';
 import Button from 'antd/lib/button';
 import Modal from 'antd/lib/modal';
 import Notification from 'antd/lib/notification';
+import Popconfirm from 'antd/lib/popconfirm';
 import moment from 'moment';
 import 'moment/locale/zh-cn';
 moment.locale('zh-cn');
 
 import JsonFormatter from '../util/JSON_Format'
 
+import ParamTable from './editable_param_table';
+
+import dataParser from '../util/Data_Parser';
+
 const dateFormat = 'YYYY-MM-DD HH:mm:ss';
 
 const Option = Select.Option;
-let pageSize = 10;
 
 Message.config({
     duration: 2,
@@ -31,6 +35,7 @@ Notification.config({
 });
 
 const JF = new JsonFormatter();
+const DP = new dataParser();
 
 class ApiManage extends React.Component{
 
@@ -79,6 +84,20 @@ class ApiManage extends React.Component{
             )
         }];
         this.state = {
+
+            addTableParam: null,
+            editTableParam: null,
+            addTableJson: null,
+            editTableJson: null,
+
+            addParamVisible: false,
+            editParamVisible: false,
+            addJsonVisible: false,
+            editJsonVisible: false,
+
+            lastEditParam: '',
+            lastAddParam: '',
+
             addStatus: false,
             editStatus: false,
             paramStatus: false,
@@ -106,9 +125,11 @@ class ApiManage extends React.Component{
     // 新增API
     saveAPI = () => {
         let data = {
+            paramTable: JSON.stringify(this.state.addTableParam),
+            jsonTable: JSON.stringify(this.state.addTableJson),
             method: this.state.method,
             createTime: moment().format(dateFormat),
-            json: JF.toJsonStr(this.state.json)
+            json: JF.toJsonStr(this.state.json),
         };
         if(this.state.method === 'GET'){
             // 校验GET请求URL和JSON参数格式
@@ -125,7 +146,7 @@ class ApiManage extends React.Component{
             dataType: 'JSON',
             success: data => {
                 if(data.success){
-                    Message.success('创建成功')
+                    Message.success('创建成功');
                 }else{
                     Message.error(data.msg.message)
                 }
@@ -157,9 +178,11 @@ class ApiManage extends React.Component{
     // 编辑API
     updateAPI = () => {
         let data = {
+            paramTable: JSON.stringify(this.state.editTableParam),
+            jsonTable: JSON.stringify(this.state.editTableJson),
             id: this.state.api._id,
             method: this.state.editMethod,
-            json: JF.toJsonStr(this.state.editJson)
+            json: JF.toJsonStr(this.state.editJson),
         };
         if(this.state.editMethod === 'GET'){
             data.url = this.state.editUrl;
@@ -248,7 +271,17 @@ class ApiManage extends React.Component{
                 method: 'POST',
                 dataType: 'JSON',
                 success: data => {
-                    console.log(data)
+                    if(data.msg){
+                        Notification.error({
+                            message: '请求测试失败',
+                            description: '错误信息: ' + data.msg
+                        });
+                    }else{
+                        Notification.success({
+                            message: '请求测试成功',
+                            description: ''
+                        });
+                    }
                 }
             })
         }else if(method === 'GET'){
@@ -257,7 +290,17 @@ class ApiManage extends React.Component{
                 method: 'GET',
                 dataType: 'JSON',
                 success: data => {
-                    console.log(data)
+                    if(data.msg){
+                        Notification.error({
+                            message: '请求测试失败',
+                            description: '错误信息: ' + data.msg
+                        });
+                    }else{
+                        Notification.success({
+                            message: '请求测试成功',
+                            description: ''
+                        });
+                    }
                 }
             })
         }
@@ -289,8 +332,12 @@ class ApiManage extends React.Component{
 
     // 隐藏新增API Modal
     closeAddModal = (bool) => {
-        if(!this.isFullFill('add')){
+        if(!this.isFullFill('add') && bool){
             Message.error('请完整填写表单内容');
+            return;
+        }
+        if(this.state.url.charAt(0) !== '/' && bool){
+            Message.error('请正确填写请求路径,以 / 开头');
             return;
         }
         if(!this.state.addStatus && bool){
@@ -313,7 +360,9 @@ class ApiManage extends React.Component{
             editUrl: record.url,
             editMethod: record.method,
             editParam: record.param,
-            editJson: JSON.parse(record.json) instanceof Array ? JF.toJsonObj(JSON.parse(record.json), 1, true) : (JSON.parse(record.json) instanceof Object ? JF.toJsonObj(JSON.parse(record.json), 1, false) : record.json),
+            editTableParam: JSON.parse(record.paramTable),
+            editJson: JF.isString(record.json) ? record.json : (JSON.parse(record.json) instanceof Array ? JF.toJsonObj(JSON.parse(record.json), 1, true) : (JSON.parse(record.json) instanceof Object ? JF.toJsonObj(JSON.parse(record.json), 1, false) : null)),
+            editTableJson: JSON.parse(record.jsonTable),
             editStatus: false,
             editModalVisible: true
         })
@@ -321,8 +370,12 @@ class ApiManage extends React.Component{
 
     // 隐藏编辑API Modal
     closeEditModal = (bool) => {
-        if(!this.isFullFill('edit')){
+        if(!this.isFullFill('edit') && bool){
             Message.error('请完整填写表单内容');
+            return;
+        }
+        if(this.state.editUrl.charAt(0) !== '/' && bool){
+            Message.error('请正确填写请求路径,以 / 开头');
             return;
         }
         if(!this.state.editStatus && bool){
@@ -340,50 +393,56 @@ class ApiManage extends React.Component{
 
     // 显示参数配置Modal
     showParamModal = () => {
-        this.setState({
-            paramStatus: false,
-            paramModalVisible: true
-        })
+        let newState = {};
+        newState['paramStatus'] = false;
+        newState['paramModalVisible'] = true;
+        if(this.state.addTableParam){
+            let isArray = DP.isArray(this.state.addTableParam);
+            newState['param'] = JF.toJsonObj(DP.dataSourceFill(this.state.addTableParam), 1, isArray);
+        }
+        this.setState(newState);
     };
 
     // 隐藏参数配置Modal
     closeParamModal = (bool) => {
+        let newState = {};
+        newState['paramModalVisible'] = false;
         if(!this.state.paramStatus && bool){
             Message.info('请先进行参数校验');
             return;
         }
-        if(!bool){
-            this.setState({
-                param: null
-            })
+        if(this.state.method === 'GET' && bool){
+            let { url } = this.get2Post2Get('setParamStr', 'add');
+            newState['url'] = url;
         }
-        this.setState({
-            paramModalVisible: false
-        })
+        this.setState(newState)
     };
 
     // 显示编辑参数配置Modal
     showEditParamModal = () => {
-        this.setState({
-            editParamStatus: false,
-            editParamModalVisible: true
-        })
+        let newState = {};
+        newState['editParamStatus'] = false;
+        newState['editParamModalVisible'] = true;
+        if(this.state.editTableParam){
+            let isArray = DP.isArray(this.state.editTableParam);
+            newState['editParam'] = JF.toJsonObj(DP.dataSourceFill(this.state.editTableParam), 1, isArray);
+        }
+        this.setState(newState);
     };
 
     // 隐藏编辑参数配置Modal
     closeEditParamModal = (bool) => {
+        let newState = {};
+        newState['editParamModalVisible'] = false;
         if(!this.state.editParamStatus && bool){
             Message.info('请先进行参数校验');
             return;
         }
-        if(!bool){
-            this.setState({
-                editParam: this.state.api.param
-            })
+        if(this.state.editMethod === 'GET' && bool){
+            let { url } = this.get2Post2Get('setParamStr', 'edit');
+            newState['editUrl'] = url;
         }
-        this.setState({
-            editParamModalVisible: false
-        })
+        this.setState(newState)
     };
 
     // 清空新增/编辑Modal
@@ -391,8 +450,10 @@ class ApiManage extends React.Component{
         this.setState({
             url: '',
             method: 'GET',
+            addTableParam: null,
             param: '',
-            json: null
+            json: null,
+            addTableJson: null
         })
     };
 
@@ -415,7 +476,6 @@ class ApiManage extends React.Component{
         else
             this.setState({
                 url,
-                param: null,
                 method: value
             })
     };
@@ -455,13 +515,13 @@ class ApiManage extends React.Component{
         else
             this.setState({
                 editUrl: url,
-                editParam: null,
                 editMethod: value
             })
     };
 
     // 设置请求参数
     setEditParam = (e) => {
+        // todo: 可以将编辑的和表格的进行映射 修改则互相改变
         this.setState({
             editParam: e.target.value,
             editParamStatus: false
@@ -479,6 +539,10 @@ class ApiManage extends React.Component{
     // 格式化JSON输入=>对象格式(实质:在字符串加上/n/t等)
     formatAndCheckJSON = (type, data) => {
         let result;
+        if(!data){
+            Message.warn('请填写具体内容后再进行校验');
+            return;
+        }
         if(JF.isString(data)){
             result = data;
             if(data.indexOf(':') !== -1){
@@ -558,7 +622,7 @@ class ApiManage extends React.Component{
     };
 
     // 格式化JSON输入=>字符串
-    stringfyJSON = (type, data) => {
+    stringifyJSON = (type, data) => {
         let str;
         if(type === 'add'){
             if(data && typeof data === 'string'){
@@ -591,11 +655,10 @@ class ApiManage extends React.Component{
             else
                 return (ts.editUrl && ts.editParam && ts.editMethod && ts.editJson);
         }
-    }
+    };
 
     // POST请求和GET请求之间转换的参数及URL转换
-    get2Post2Get(type, context){
-        console.log(this.state.editParam);
+    get2Post2Get = (type, context) => {
         let tsMethod,
             tsUrl,
             tsParam,
@@ -611,20 +674,29 @@ class ApiManage extends React.Component{
             tsParam = this.state.editParam;
         }
         if(tsMethod === 'GET' && type === 'POST'){
-            let urlArr = tsUrl.split('?');
-            let paramArr = urlArr[1].split('&');
-            url = urlArr[0];
-            if(paramArr.length !== 0){
-                paramArr.map(item=>{
-                    let paramItem;
-                    paramItem = item.split('=');
-                    param[paramItem[0]] = paramItem[1];
-                })
+            if(tsUrl && tsUrl.indexOf('?') !== -1){
+                let urlArr = tsUrl.split('?');
+                let paramArr = urlArr[1].split('&');
+                url = urlArr[0];
+                if(paramArr.length !== 0){
+                    paramArr.map(item=>{
+                        let paramItem;
+                        paramItem = item.split('=');
+                        param[paramItem[0]] = paramItem[1];
+                    })
+                }
+                param = JSON.stringify(param);
+            }else {
+                url = tsUrl;
+                param = null;
             }
-            param = JSON.stringify(param);
-        }else if(tsMethod === 'POST' && type === 'GET'){
+        }else if(tsMethod === 'POST' && type === 'GET' || type === 'setParamStr'){
             let jsonObj = JSON.parse(tsParam);
             let length = JF.getLength(jsonObj);
+            // 已经存在参数
+            if(tsUrl.indexOf('?') !== -1){
+                tsUrl = tsUrl.split('?')[0];
+            }
             if(length === 0){
                 url = tsUrl;
             }else if(length === 1){
@@ -643,35 +715,67 @@ class ApiManage extends React.Component{
                 }
             }
         }
-        return {url, param}
-    }
+        return { url, param }
+    };
 
     componentDidMount = () =>{
         this.getAllAPI();
     };
 
+
+    showEditTable = (type) => {
+        let visible = {};
+        visible[type] = true;
+        this.setState(visible)
+    };
+
+    // 保存编辑框
+    onOk = (value, tar, table, visible) => {
+        let state = {};
+        let isArray = DP.isArray(value);
+        state[tar] = JF.toJsonObj(DP.dataSourceFill(value), 1, isArray);
+        state[visible] = false;
+        state[table] = value;
+        this.setState(state);
+    };
+
+    // 关闭编辑框
+    onCancel = (type) => {
+        let visible = {};
+        visible[type] = false;
+        this.setState(visible);
+    };
+
+
     render() {
 
-        const returnJSON = this.state.api ?  ( JSON.parse(this.state.api.json) instanceof Array ? JF.toJsonObj(JSON.parse(this.state.api.json), 1, true) : ( JSON.parse(this.state.api.json) instanceof Object ? JF.toJsonObj(JSON.parse(this.state.api.json), 1, false) : this.state.api.json)) : null;
+        const returnJSON = this.state.api ?  ( JF.isString(this.state.api.json) ? this.state.api.json : (JSON.parse(this.state.api.json) instanceof Array ? JF.toJsonObj(JSON.parse(this.state.api.json), 1, true) : ( JSON.parse(this.state.api.json) instanceof Object ? JF.toJsonObj(JSON.parse(this.state.api.json), 1, false) : null))) : null;
 
         const addParam = (
             <Tooltip placement="top" title="参数配置">
-                <Icon style={{cursor: 'pointer',fontSize:16, display: this.state.method === 'GET' ? 'none' : 'block' }} type="plus-circle-o" onClick={()=>this.showParamModal()}/>
+                <Icon style={{cursor: 'pointer',fontSize:16}} type="plus-circle-o" onClick={()=>this.showParamModal()}/>
             </Tooltip>
         );
 
         const editParam = (
             <Tooltip placement="top" title="参数配置">
-                <Icon style={{cursor: 'pointer',fontSize:16, display: this.state.editMethod === 'GET' ? 'none' : 'block' }} type="plus-circle-o" onClick={()=>this.showEditParamModal()}/>
+                <Icon style={{cursor: 'pointer',fontSize:16}} type="plus-circle-o" onClick={()=>this.showEditParamModal()}/>
             </Tooltip>
         );
 
-        const methodSelect = (
-            <Select value={this.state.method} onChange={this.setMethod}>
-                <Option value="GET">GET</Option>
-                <Option value="POST">POST</Option>
-            </Select>
-        );
+        const addFooter = [
+            (<Popconfirm key="addPop" title="点击取消则当前编辑结果将不会被保存" onConfirm={()=>this.closeParamModal(false)} okText="Ok" cancelText="No">
+                <Button key="addCancel" size="large">取消</Button>
+            </Popconfirm>),
+            <Button key="addSubmit" type="primary" size="large" onClick={()=>this.closeParamModal(true)}>确定</Button>
+        ];
+
+        const editFooter = [
+            (<Popconfirm key="editPop" title="点击取消则当前编辑结果将不会被保存" onConfirm={()=>this.closeEditParamModal(false)} okText="Ok" cancelText="No">
+                <Button key="editCancel" size="large">取消</Button>
+            </Popconfirm>),
+            <Button key="editSubmit" type="primary" size="large" onClick={()=>this.closeEditParamModal(true)}>确定</Button>
+        ];
 
         return(
             <section id="container">
@@ -702,14 +806,29 @@ class ApiManage extends React.Component{
                             <Option value="GET">GET</Option>
                             <Option value="POST">POST</Option>
                         </Select>
-                        <Input placeholder={this.state.method === "GET" ? "请输入GET请求路径,形如:/castor/getUser.json?name=zhangsan&age=23" : "请输入POST请求路径,并添加请求参数"}
+                        <Input placeholder={this.state.method === "GET" ? "请输入GET请求路径,形如:/castor/getUser.json" : "请输入POST请求路径,并添加请求参数"}
                                className="url-input" value={this.state.url} onChange={(e)=>this.setURL(e)} suffix={addParam}/>
+                        <Input value={this.state.json} style={{marginTop: 9}} autosize={{minRows:15}} type="textarea" onChange={(e)=>this.setJSON(e)}/>
                         <div className="op-btns">
-                            <Button icon="sync" onClick={()=>this.stringfyJSON('add', this.state.json)}>字符串</Button>
-                            <Button icon="sync" onClick={()=>this.formatAndCheckJSON('add', this.state.json)}>格式化并校验参数</Button>
+                            <Button className="json-btns" onClick={()=>this.showEditTable('addJsonVisible')}>JSON编辑</Button>
+                            <Button className="json-btns" onClick={()=>this.stringifyJSON('add', this.state.json)}>字符串化</Button>
+                            <Button className="json-btns" onClick={()=>this.formatAndCheckJSON('add', this.state.json)}>格式化并校验</Button>
                         </div>
-                        <Input value={this.state.json} autosize={{minRows:15}} type="textarea" onChange={(e)=>this.setJSON(e)}/>
                     </div>
+                </Modal>
+                <Modal
+                    style={{ top: 150 }}
+                    visible={this.state.paramModalVisible}
+                    title="参数配置"
+                    closable={false}
+                    footer={addFooter}>
+                    <div>
+                        {
+                            <Input value={this.state.param} style={{marginBottom: 5}} autosize={{minRows:10}} type="textarea" onChange={(e)=>this.setParam(e)}/>
+                        }
+                    </div>
+                    <Button onClick={()=>this.showEditTable('addParamVisible')}>参数编辑</Button>
+                    <Button className="json-btns" type="check" onClick={()=>this.formatAndCheckJSON('param', this.state.param)}>格式化并校验</Button>
                 </Modal>
                 <Modal
                     visible={this.state.editModalVisible}
@@ -722,41 +841,32 @@ class ApiManage extends React.Component{
                             <Option value="POST">POST</Option>
                         </Select>
                         <Input className="url-input" placeholder="请求URL" value={this.state.editUrl} onChange={(e)=>this.setEditURL(e)} suffix={editParam}/>
+                        <Input value={this.state.editJson} style={{marginTop: 9}} autosize={{minRows:15}} type="textarea" onChange={(e)=>this.setEditJSON(e)}/>
                         <div className="op-btns">
-                            <Button icon="sync" onClick={()=>this.stringfyJSON('edit', this.state.editJson)}>字符串</Button>
-                            <Button icon="sync" onClick={()=>this.formatAndCheckJSON('edit', this.state.editJson)}>格式化并校验参数</Button>
+                            <Button onClick={()=>this.showEditTable('editJsonVisible')}>JSON编辑</Button>
+                            <Button className="json-btns" onClick={()=>this.stringifyJSON('edit', this.state.editJson)}>字符串化</Button>
+                            <Button className="json-btns" onClick={()=>this.formatAndCheckJSON('edit', this.state.editJson)}>格式化并校验</Button>
                         </div>
-                        <Input value={this.state.editJson} autosize={{minRows:15}} type="textarea" onChange={(e)=>this.setEditJSON(e)}/>
                     </div>
-                </Modal>
-                <Modal
-                    style={{ top: 150 }}
-                    visible={this.state.paramModalVisible}
-                    title="参数配置"
-                    onOk={()=>this.closeParamModal(true)}
-                    onCancel={()=>this.closeParamModal(false)}>
-                    <div>
-                        {
-                            this.state.method === 'GET' ? null :
-                                <Input value={this.state.param} autosize={{minRows:10}} type="textarea" onChange={(e)=>this.setParam(e)}/>
-                        }
-                    </div>
-                    <Button className="op-check-btn" type="check" onClick={()=>this.formatAndCheckJSON('param', this.state.param)}>格式化并校验参数</Button>
                 </Modal>
                 <Modal
                     style={{ top: 150 }}
                     visible={this.state.editParamModalVisible}
+                    closable={false}
                     title="参数配置"
-                    onOk={()=>this.closeEditParamModal(true)}
-                    onCancel={()=>this.closeEditParamModal(false)}>
+                    footer={editFooter}>
                     <div>
                         {
-                            this.state.editMethod === 'GET' ? null :
-                                <Input value={this.state.editParam} autosize={{minRows:10}} type="textarea" onChange={(e)=>this.setEditParam(e)}/>
+                            <Input value={this.state.editParam} style={{marginBottom: 5}} autosize={{minRows:10}} type="textarea" onChange={(e)=>this.setEditParam(e)}/>
                         }
-                        <Button className="op-check-btn" type="check" onClick={()=>this.formatAndCheckJSON('editParam', this.state.editParam)}>格式化并校验参数</Button>
+                        <Button onClick={()=>this.showEditTable('editParamVisible')}>参数编辑</Button>
+                        <Button className="json-btns" onClick={()=>this.formatAndCheckJSON('editParam', this.state.editParam)}>格式化并校验</Button>
                     </div>
                 </Modal>
+                <ParamTable visible={this.state.addParamVisible} title="参数配置表" dataSource={null} onOk={(value)=>this.onOk(value, 'param', 'addTableParam', 'addParamVisible')} onCancel={()=>this.onCancel('addParamVisible')}/>
+                <ParamTable visible={this.state.editParamVisible} title="参数配置表" dataSource={this.state.editTableParam} onOk={(value)=>this.onOk(value, 'editParam', 'editTableParam', 'editParamVisible')} onCancel={()=>this.onCancel('editParamVisible')}/>
+                <ParamTable visible={this.state.addJsonVisible} title="Json配置表" dataSource={null} onOk={(value)=>this.onOk(value, 'json', 'addTableJson', 'addJsonVisible')} onCancel={()=>this.onCancel('addJsonVisible')}/>
+                <ParamTable visible={this.state.editJsonVisible} title="Json配置表" dataSource={this.state.editTableJson} onOk={(value)=>this.onOk(value, 'editJson', 'editTableJson', 'editJsonVisible')} onCancel={()=>this.onCancel('editJsonVisible')}/>
             </section>
         )
     }

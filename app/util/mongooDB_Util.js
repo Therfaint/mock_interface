@@ -30,6 +30,9 @@ module.exports = class dbUtils{
             param: {
                 type: mongoose.Schema.Types.Mixed
             },
+            paramTable: {
+                type: mongoose.Schema.Types.Mixed
+            },
             method: {
                 type: String,
                 required: true
@@ -41,8 +44,12 @@ module.exports = class dbUtils{
             json: {
                 type: mongoose.Schema.Types.Mixed,
                 required: true
+            },
+            jsonTable: {
+                type: mongoose.Schema.Types.Mixed,
+                required: true
             }
-        })
+        });
         this.API = this.conn.model('api', this.apiSchema);
     }
 
@@ -89,7 +96,7 @@ module.exports = class dbUtils{
         if(type === 'POST')
             selectParam = {url: url, method: type, param: data};
         else
-            selectParam = {url: url, method: type}
+            selectParam = {url: url, method: type};
         this.API.find(selectParam, {json: 1, param: 1}, function (err,result) {
             if(err){
                 status.fail.msg = err;
@@ -102,7 +109,7 @@ module.exports = class dbUtils{
     }
 
     queryByParams(param, callback){
-        var reg = new RegExp(param);
+        let reg = new RegExp(param);
         this.API.find({url: reg},function (err,result) {
             if(err){
                 status.fail.msg = err;
@@ -126,4 +133,4 @@ module.exports = class dbUtils{
         })
     }
 
-}
+};

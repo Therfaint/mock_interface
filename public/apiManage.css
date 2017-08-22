@@ -28,8 +28,12 @@ a {
 }
 
 .op-btns{
-    margin-top: 9px;
-    margin-bottom: 3px;
+    margin-top: 5px;
+
+}
+
+.json-btns{
+    margin-left: 3px;
 }
 
 .op-check-btn{
