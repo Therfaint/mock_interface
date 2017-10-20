@@ -5,22 +5,25 @@ let express = require('express');
 let router = express.Router();
 let app = express();
 let bodyParser = require('body-parser');
-let dbClazz = require('./app/util/mongooDB_Util');
+let apiHandler = require('./app/util/api_db_op');
 
-let db = new dbClazz();
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+// let proHandler = require('./app/util/project_db_op');
 
-app.use(bodyParser.urlencoded({extended: false}));
+let api = new apiHandler();
+// let pro = new proHandler();
+
 const webpack = require('webpack');
-
 const webpackHotMiddleWare = require('webpack-hot-middleware');
 const webpackDevMiddleWare = require('webpack-dev-middleware');
 const config = require('./webpack.config');
 const compiler = webpack(config);
+app.use(webpackDevMiddleWare(compiler, {noInfo: true}));
+app.use(webpackHotMiddleWare(compiler));
 
 app.use(express.static('public'));
 
-app.use(webpackDevMiddleWare(compiler, {noInfo: true}));
-app.use(webpackHotMiddleWare(compiler));
 
 app.all('*', function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -47,13 +50,16 @@ const renderFullPage = () => {
     `
 };
 
+// 获取初始页面
 app.get('/', function (req, res) {
     const page = renderFullPage();
     res.status(200).send(page);
 });
 
-app.post('/saveAPI', function (req, res) {
-    let api = {
+/* 接口操作 */
+// todo: 字段和输入加上project字段
+app.post('/saveApi', function (req, res) {
+    let apiObj = {
         url: req.body.url,
         param: req.body.param,
         paramTable: req.body.paramTable,
@@ -62,7 +68,7 @@ app.post('/saveAPI', function (req, res) {
         json: req.body.json,
         jsonTable: req.body.jsonTable,
     };
-    db.add(api, function (status) {
+    api.add(apiObj, function (status) {
         if (status.code === 200) {
             res.status(200).json({
                 success: true
@@ -76,8 +82,8 @@ app.post('/saveAPI', function (req, res) {
     });
 });
 
-app.post('/deleteAPI', function (req, res) {
-    db.deleteById(req.body.id, function (status) {
+app.post('/deleteApi', function (req, res) {
+    api.deleteById(req.body.id, function (status) {
         if (status.code === 200) {
             res.status(200).json({
                 success: true
@@ -90,7 +96,7 @@ app.post('/deleteAPI', function (req, res) {
     });
 });
 
-app.post('/updateAPI', function (req, res) {
+app.post('/updateApi', function (req, res) {
     let id = req.body.id;
     let param = {
         url: req.body.url,
@@ -100,7 +106,7 @@ app.post('/updateAPI', function (req, res) {
         paramTable: req.body.paramTable,
         jsonTable: req.body.jsonTable
     };
-    db.update(id, param, function (status) {
+    api.update(id, param, function (status) {
         if (status.code === 200) {
             res.status(200).json({
                 success: true
@@ -115,7 +121,7 @@ app.post('/updateAPI', function (req, res) {
 });
 
 app.get('/getAllApi', function (req, res) {
-    db.selectAll(function (status, result) {
+    api.selectAll(function (status, result) {
         if (status.code === 200) {
             res.status(200).json({
                 success: true,
@@ -131,7 +137,8 @@ app.get('/getAllApi', function (req, res) {
 });
 
 app.post('/queryByParam', function (req, res) {
-    db.queryByParams(req.body.url, function (status, result) {
+    //todo: 如果有第一个项目选项一起选 如果只有一个则通过自己选
+    api.queryByParams(req.body.url, function (status, result) {
         if (status.code === 200) {
             res.status(200).json({
                 success: true,
@@ -146,6 +153,85 @@ app.post('/queryByParam', function (req, res) {
     });
 });
 
+/* 项目操作 */
+
+app.post('/savePro', function (req, res) {
+    let pro = {
+        projectCode: req.body.projectCode,
+        projectName: req.body.projectName,
+        description: req.body.description,
+        createTime: req.body.createTime
+    };
+    pro.add(pro, function (status) {
+        if (status.code === 200) {
+            res.status(200).json({
+                success: true
+            })
+        } else if (status.code === 500) {
+            res.status(200).json({
+                success: false,
+                msg: status.msg
+            })
+        }
+    });
+});
+
+app.post('/deletePro', function (req, res) {
+    pro.deleteById(req.body.id, function (status) {
+        if (status.code === 200) {
+            res.status(200).json({
+                success: true
+            })
+        } else if (status.code === 500) {
+            res.status(200).json({
+                success: false
+            })
+        }
+    });
+});
+
+app.post('/updatePro', function (req, res) {
+    let id = req.body.id;
+    let param = {
+        url: req.body.url,
+        param: req.body.param,
+        method: req.body.method,
+        json: req.body.json,
+        paramTable: req.body.paramTable,
+        jsonTable: req.body.jsonTable
+    };
+    api.update(id, param, function (status) {
+        if (status.code === 200) {
+            res.status(200).json({
+                success: true
+            })
+        } else if (status.code === 500) {
+            res.status(200).json({
+                success: false,
+                msg: status.msg
+            })
+        }
+    });
+});
+
+app.get('/getAllPro', function (req, res) {
+    pro.selectAll(function (status, result) {
+        if (status.code === 200) {
+            res.status(200).json({
+                success: true,
+                result
+            })
+        } else if (status.code === 500) {
+            res.status(200).json({
+                success: false,
+                msg: status.msg
+            })
+        }
+    })
+});
+
+/* 处理外部访问 暴露存储接口 */
+
 app.post('*', function (req, res) {
     let param = {};
     for (let k in req.body) {
@@ -159,7 +245,7 @@ app.post('*', function (req, res) {
             param[k] = req.body[k];
         }
     }
-    db.getAPI(req.originalUrl, 'POST', JSON.stringify(param), function (status, result) {
+    api.getAPI(req.originalUrl, 'POST', JSON.stringify(param), function (status, result) {
         if (status.code === 200) {
             let ret;
             switch (result.length) {
@@ -188,7 +274,7 @@ app.get('*', function (req, res) {
         return;
     }
     // decode解决中文乱码问题
-    db.getAPI(decodeURI(req.originalUrl), 'GET', null, function (status, result) {
+    api.getAPI(decodeURI(req.originalUrl), 'GET', null, function (status, result) {
         if (status.code === 200) {
             let ret;
             switch (result.length) {

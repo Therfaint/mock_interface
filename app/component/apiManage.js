@@ -44,21 +44,22 @@ class ApiManage extends React.Component{
         this.tableColumns = [{
             title: '请求路径',
             key: 'url',
-            width: 300,
+            dataIndex: 'url',
+            width: 350,
             render: (text, record, index) =>(
-                <span>{record.url}</span>
+                <a onClick={(e)=>this.copyUrl(e, text)}>{record.url}</a>
             )
         },{
             title: '请求类型',
             key: 'method',
-            width: 150,
+            width: 100,
             render: (text, record, index) =>(
                 <span>{record.method}</span>
             )
         },{
             title: '创建时间',
             key: 'createTime',
-            width: 200,
+            width: 180,
             render: (text, record, index) =>(
                 <span>{record.createTime}</span>
             )
@@ -77,7 +78,7 @@ class ApiManage extends React.Component{
             width: 300,
             render: (text, record, index) => (
                 <div>
-                    <Button icon="setting" onClick={()=>this.showEditModal(record)}>编辑</Button>
+                    <Button icon="edit" onClick={()=>this.showEditModal(record)}>编辑</Button>
                     <Button icon="delete" className="op-btn" onClick={()=> this.deleteAPI(record)}>删除</Button>
                     <Button icon="tool" className="op-btn" onClick={()=> this.sendAPI(record)}>测试</Button>
                 </div>
@@ -102,9 +103,14 @@ class ApiManage extends React.Component{
             editStatus: false,
             paramStatus: false,
             editParamStatus: false,
+
             searchParam: '',
+            searchPro: '',
+
             api: null,
             apis: null,
+            pros: null,
+
             url: '',
             method: 'GET',
             param: null,
@@ -118,9 +124,20 @@ class ApiManage extends React.Component{
             addModalVisible: false,
             editModalVisible: false,
             paramModalVisible: false,
-            editParamModalVisible: false
+            editParamModalVisible: false,
+
+            documentVisible: false,
+            projectEditVisible: false
         }
     }
+
+    // 复制链接
+    copyUrl = (e, text) => {
+        this.refs['copy_panel'].value = `${window.location.protocol}//${window.location.host}${text}`;
+        this.refs['copy_panel'].select();
+        document.execCommand("copy");
+        Message.success('请求路径已复制');
+    };
 
     // 新增API
     saveAPI = () => {
@@ -140,7 +157,7 @@ class ApiManage extends React.Component{
             data.param = JF.toJsonStr(this.state.param);
         }
         $.ajax({
-            url: '/saveAPI',
+            url: '/saveApi',
             data: data,
             method: 'POST',
             dataType: 'JSON',
@@ -158,7 +175,7 @@ class ApiManage extends React.Component{
     // 删除API
     deleteAPI = (record) => {
         $.ajax({
-            url: '/deleteAPI',
+            url: '/deleteApi',
             data: {
                 id: record._id
             },
@@ -191,7 +208,7 @@ class ApiManage extends React.Component{
             data.param = JF.toJsonStr(this.state.editParam);
         }
         $.ajax({
-            url: '/updateAPI',
+            url: '/updateApi',
             data: data,
             method: 'POST',
             dataType: 'JSON',
@@ -204,6 +221,11 @@ class ApiManage extends React.Component{
                 this.getAllAPI();
             }
         })
+    };
+
+    // todo:获取全部项目
+    getAllPro = () => {
+
     };
 
     // 获取全部API
@@ -226,6 +248,11 @@ class ApiManage extends React.Component{
                 }
             }
         })
+    };
+
+    // todo:通过项目名进行查询
+    getAPIByPro = () => {
+
     };
 
     // 通过输入模糊查询API
@@ -718,11 +745,6 @@ class ApiManage extends React.Component{
         return { url, param }
     };
 
-    componentDidMount = () =>{
-        this.getAllAPI();
-    };
-
-
     showEditTable = (type) => {
         let visible = {};
         visible[type] = true;
@@ -746,6 +768,34 @@ class ApiManage extends React.Component{
         this.setState(visible);
     };
 
+    showDocument = () => {
+        this.setState({
+            documentVisible: true
+        })
+    };
+
+    closeDocument = () => {
+        this.setState({
+            documentVisible: false
+        })
+    };
+
+    showEditProject = () => {
+        this.setState({
+            projectEditVisible: true
+        })
+    };
+
+    closeEditProject = () => {
+        this.setState({
+            projectEditVisible: false
+        })
+    };
+
+    componentDidMount = () =>{
+        this.getAllPro();
+        this.getAllAPI();
+    };
 
     render() {
 
@@ -779,10 +829,39 @@ class ApiManage extends React.Component{
 
         return(
             <section id="container">
-                <h2 className="title">接口管理</h2>
-                <div className="operations">
-                    <Button style={{float: 'right',marginTop: 4}} type="primary" icon="plus" onClick={()=>this.showAddModal()}>创建接口</Button>
-                    <Input placeholder="请输入请求路径" style={{width: 250}} value={this.state.searchParam} onChange={this.getAPIByParam}/>
+                <input type="text" ref="copy_panel" style={{position: 'absolute', top: -100, left: 20, zIndex: -999}}/>
+                <div className="title">
+                    <span style={{fontSize:20, fontWeight: 'bold'}}>接口管理</span>
+                    <Tooltip placement="bottom" title="创建接口">
+                        <Icon style={{fontSize:18, marginLeft:9, cursor:'pointer'}} type="plus-circle-o" onClick={()=>this.showAddModal()}/>
+                    </Tooltip>
+                    <div style={{position:'absolute', top:3, left:166}}>
+                        <Select
+                            placeholder="请选择/输入项目名称"
+                            style={{width: 200, marginLeft: 18}}
+                            value={this.state.searchPro}
+                            onSelect={this.getAPIByPro}
+                            showSearch
+                            optionFilterProp="children"
+                            filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+                        >
+                        {
+                            // todo: 新增数据库操作类 并添加增删改查接口
+                            this.state.pros ? this.state.pros.map(item=>{
+                                return (<Option key={item.key}>{item.name}</Option>)
+                            }) : null
+                        }
+                        </Select>
+                        <Input placeholder="请输入请求路径" style={{width: 250, marginLeft:9}} value={this.state.searchParam} onChange={this.getAPIByParam}/>
+                    </div>
+                    <div className="header-btns">
+                        <span className="header-btn" onClick={this.showEditProject}>
+                            <Icon type="setting"/>项目配置
+                        </span>
+                        <span className="header-btn" style={{marginLeft:12}} onClick={this.showDocument}>
+                            <Icon type="info-circle-o"/>使用说明
+                        </span>
+                    </div>
                 </div>
                 <Table
                     columns={this.tableColumns}
@@ -791,6 +870,7 @@ class ApiManage extends React.Component{
                 <Modal
                     visible={this.state.showJsonModalVisible}
                     title={this.state.api ? this.state.api.url : null}
+                    maskClosable={false}
                     onOk={this.closeShowJsonModal}
                     onCancel={this.closeShowJsonModal}>
                     <Input value={returnJSON}
@@ -799,6 +879,7 @@ class ApiManage extends React.Component{
                 <Modal
                     visible={this.state.addModalVisible}
                     title="创建接口"
+                    maskClosable={false}
                     onOk={()=>this.closeAddModal(true)}
                     onCancel={()=>this.closeAddModal(false)}>
                     <div>
@@ -806,6 +887,7 @@ class ApiManage extends React.Component{
                             <Option value="GET">GET</Option>
                             <Option value="POST">POST</Option>
                         </Select>
+                        {/*todo:新增和编辑时需要添加项目选择*/}
                         <Input placeholder={this.state.method === "GET" ? "请输入GET请求路径,形如:/castor/getUser.json" : "请输入POST请求路径,并添加请求参数"}
                                className="url-input" value={this.state.url} onChange={(e)=>this.setURL(e)} suffix={addParam}/>
                         <Input value={this.state.json} style={{marginTop: 9}} autosize={{minRows:15}} type="textarea" onChange={(e)=>this.setJSON(e)}/>
@@ -820,6 +902,7 @@ class ApiManage extends React.Component{
                     style={{ top: 150 }}
                     visible={this.state.paramModalVisible}
                     title="参数配置"
+                    maskClosable={false}
                     closable={false}
                     footer={addFooter}>
                     <div>
@@ -833,6 +916,7 @@ class ApiManage extends React.Component{
                 <Modal
                     visible={this.state.editModalVisible}
                     title={this.state.api ? this.state.api.url : null}
+                    maskClosable={false}
                     onOk={()=>this.closeEditModal(true)}
                     onCancel={()=>this.closeEditModal(false)}>
                     <div>
@@ -854,6 +938,7 @@ class ApiManage extends React.Component{
                     visible={this.state.editParamModalVisible}
                     closable={false}
                     title="参数配置"
+                    maskClosable={false}
                     footer={editFooter}>
                     <div>
                         {
@@ -861,6 +946,26 @@ class ApiManage extends React.Component{
                         }
                         <Button onClick={()=>this.showEditTable('editParamVisible')}>参数编辑</Button>
                         <Button className="json-btns" onClick={()=>this.formatAndCheckJSON('editParam', this.state.editParam)}>格式化并校验</Button>
+                    </div>
+                </Modal>
+                <Modal
+                    visible={this.state.documentVisible}
+                    title="使用说明"
+                    maskClosable={false}
+                    onOk={this.closeDocument}
+                    onCancel={this.closeDocument}>
+                    <div>
+                        敬请期待
+                    </div>
+                </Modal>
+                <Modal
+                    visible={this.state.projectEditVisible}
+                    title="项目管理"
+                    maskClosable={false}
+                    onOk={this.closeEditProject}
+                    onCancel={this.closeEditProject}>
+                    <div>
+                        敬请期待
                     </div>
                 </Modal>
                 <ParamTable visible={this.state.addParamVisible} title="参数配置表" dataSource={null} onOk={(value)=>this.onOk(value, 'param', 'addTableParam', 'addParamVisible')} onCancel={()=>this.onCancel('addParamVisible')}/>
@@ -874,3 +979,4 @@ class ApiManage extends React.Component{
 }
 
 export default ApiManage;
+//todo: 点击编辑JSON进行绑定 先校验

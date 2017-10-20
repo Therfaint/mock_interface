@@ -3,6 +3,7 @@ a {
 }
 
 #container{
+    padding: 10px 20px;
     min-width: 1200px;
 }
 
@@ -11,16 +12,10 @@ a {
 }
 
 .title{
-    line-height: 40px;
+    position: relative;
+    line-height: 60px;
     vertical-align: middle;
     padding: 3px 9px;
-    border-bottom: 1px solid #ccc;
-}
-
-.operations{
-    line-height: 36px;
-    padding: 0px 9px;
-    vertical-align: middle;
 }
 
 .url-input{
@@ -45,4 +40,17 @@ a {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+}
+
+.header-btns{
+    font-size: 13px;
+    position: absolute;
+    top: 3px;
+    right: 80px;
+    color: #999;
+    cursor: pointer;
+}
+
+.header-btn:hover{
+    color: #108ee9;
 }

@@ -1,14 +1,15 @@
 /**
  * Created by therfaint- on 01/08/2017.
  */
-var mongoose = require('mongoose');
-var status = require('./DB_Op_Status');
+let mongoose = require('mongoose');
+let status = require('./DB_Op_Status');
 
 mongoose.Promise = global.Promise;
 
-module.exports = class dbUtils{
+module.exports = class apiDbUtil{
 
     constructor(){
+
         this.conn = mongoose.createConnection('mongodb://127.0.0.1:27017/api');
 
         this.conn.on('error', function(error){
@@ -21,6 +22,8 @@ module.exports = class dbUtils{
             }
             console.log('数据库连接成功...');
         });
+
+        // todo: 是否新增ref或者进行多表查询
 
         this.apiSchema = new mongoose.Schema({
             url: {
@@ -37,6 +40,10 @@ module.exports = class dbUtils{
                 type: String,
                 required: true
             },
+            // projectId:{
+            //     type: Schema.Types.ObjectId,
+            //     ref: "Post"
+            // },
             createTime: {
                 type: String,
                 required: true

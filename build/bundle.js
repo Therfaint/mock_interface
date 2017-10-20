@@ -60,7 +60,7 @@
 /******/ 	
 /******/ 	
 /******/ 	var hotApplyOnUpdate = true;
-/******/ 	var hotCurrentHash = "09edcd16218c26ab9a81"; // eslint-disable-line no-unused-vars
+/******/ 	var hotCurrentHash = "8cd13f5dc7ec88927341"; // eslint-disable-line no-unused-vars
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule; // eslint-disable-line no-unused-vars
@@ -34830,141 +34830,9 @@ var _apiManage2 = _interopRequireDefault(_apiManage);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-_reactDom2.default.render(_react2.default.createElement(_apiManage2.default, null), document.getElementById('todoapp'));
-
-// import ParamTable from './component/editable_param_table';
-// import stringOpts from './util/Parser_Options';
-// import r from './util/Random'
-//
-// const onOk = function(value){
-//     // 处理数据
-//     console.log(value);
-//     console.log(dataSourceFill(value));
-// };
-//
-// const onCancel = function(){
-//     console.log('cancel')
-// };
-//
-// const dataSourceFill = (dataSource, type) => {
-//     let outputObj = {};
-//     let arrItem;
-//     dataSource.map((item)=>{
-//         if(item.hasOwnProperty('children')){
-//             if(item['paramType'][0] === 'array') {
-//                 outputObj[item['paramName']] = arrayParser(item['children'], item['paramType'][1]);
-//             }else if(isDeepestLayer(item['children'])){
-//                 if(item['paramType'][0] === 'object') {
-//                     if(type === 'array')
-//                         arrItem = objectParser(item['children']);
-//                     else
-//                         outputObj[item['paramName']] = objectParser(item['children']);
-//                 }
-//             }else{
-//                 outputObj[item['paramName']] = dataSourceFill(item['children']);
-//             }
-//         }else{
-//             switch (item['paramType'][0]){
-//                 case 'string':
-//                     if(type === 'array')
-//                         arrItem = stringParser(item['paramType'][1]);
-//                     else
-//                         outputObj[item['paramName']] = stringParser(item['paramType'][1]);
-//                     break;
-//                 case 'number':
-//                     if(type === 'array')
-//                         arrItem = numberParser(item['paramType'][1]);
-//                     else
-//                         outputObj[item['paramName']] = numberParser(item['paramType'][1]);
-//                     break;
-//                 case 'boolean':
-//                     if(type === 'array')
-//                         arrItem = booleanParser(item['paramType'][1]);
-//                     else
-//                         outputObj[item['paramName']] = booleanParser(item['paramType'][1]);
-//                     break;
-//                 default: console.log('Parse Error');break;
-//             }
-//         }
-//     });
-//     return arrItem !== undefined ? arrItem : outputObj;
-// };
-//
-// const isDeepestLayer = function (source) {
-//     let isExist = true;
-//     source.map(item=>{
-//         if(item.hasOwnProperty('children')){
-//             isExist = false;
-//         }
-//     });
-//     return isExist;
-// };
-//
-// const stringParser = function (value) {
-//     if(value === "@string"){
-//         return "";
-//     }
-//     return stringOpts[value]();
-// };
-//
-// const numberParser = function (value) {
-//     if(value === "@number"){
-//         return NaN;
-//     }
-//     let min, max;
-//     min = value.split('-')[0];
-//     max = value.split('-')[1];
-//     if(value.charAt(0) === '.'){
-//         min = min.substring(1);
-//         return r.getFloatRandomByRange(min, max);
-//     }
-//     else
-//         return r.getIntRandomByRange(min, max);
-// };
-//
-// const booleanParser = function (value) {
-//     return value === '@boolean' ? Boolean(r.getInt021()) : value;
-// };
-//
-// const objectParser = function (value) {
-//     let obj = {};
-//     obj = dataSourceFill(value);
-//     return obj;
-// };
-//
-// const arrayParser = function (value, total) {
-//     let arr = [];
-//     let arrItem, isPure;
-//     isPure = isPureArray(value);
-//     for(let i=0;i< Number(total); i++){
-//         if(!isPure){
-//             arrItem = dataSourceFill(value, 'array');
-//             arr.push(arrItem);
-//         }else{
-//             let item = value[0];
-//             switch (item['paramType'][0]){
-//                 case 'string':
-//                     arr.push(stringParser(item['paramType'][1]));
-//                     break;
-//                 case 'number':
-//                     arr.push(numberParser(item['paramType'][1]));
-//                     break;
-//                 case 'boolean':
-//                     arr.push(booleanParser(item['paramType'][1]));
-//             }
-//         }
-//     }
-//     return arr;
-// };
-//
-// const isPureArray = function (value) {
-//     return !(value[0]['paramType'][0] === 'object')
-// };
-
-// ReactDOM.render(<ParamTable visible={true} title="参数配置表" onOk={onOk} onCancel={onCancel}/>, document.getElementById('todoapp'));
-/**
- * Created by therfaint- on 01/08/2017.
- */
+_reactDom2.default.render(_react2.default.createElement(_apiManage2.default, null), document.getElementById('todoapp')); /**
+                                                                                                                          * Created by therfaint- on 01/08/2017.
+                                                                                                                          */
 
 /***/ }),
 /* 307 */
@@ -46310,7 +46178,7 @@ var ApiManage = function (_React$Component) {
                 data.param = JF.toJsonStr(_this.state.param);
             }
             $.ajax({
-                url: '/saveAPI',
+                url: '/saveApi',
                 data: data,
                 method: 'POST',
                 dataType: 'JSON',
@@ -46327,7 +46195,7 @@ var ApiManage = function (_React$Component) {
 
         _this.deleteAPI = function (record) {
             $.ajax({
-                url: '/deleteAPI',
+                url: '/deleteApi',
                 data: {
                     id: record._id
                 },
@@ -46359,7 +46227,7 @@ var ApiManage = function (_React$Component) {
                 data.param = JF.toJsonStr(_this.state.editParam);
             }
             $.ajax({
-                url: '/updateAPI',
+                url: '/updateApi',
                 data: data,
                 method: 'POST',
                 dataType: 'JSON',
@@ -46373,6 +46241,8 @@ var ApiManage = function (_React$Component) {
                 }
             });
         };
+
+        _this.getAllPro = function () {};
 
         _this.getAllAPI = function () {
             $.ajax({
@@ -46394,6 +46264,8 @@ var ApiManage = function (_React$Component) {
                 }
             });
         };
+
+        _this.getAPIByPro = function () {};
 
         _this.getAPIByParam = function (e) {
             _this.setState({
@@ -46887,10 +46759,6 @@ var ApiManage = function (_React$Component) {
             return { url: url, param: param };
         };
 
-        _this.componentDidMount = function () {
-            _this.getAllAPI();
-        };
-
         _this.showEditTable = function (type) {
             var visible = {};
             visible[type] = true;
@@ -46912,10 +46780,39 @@ var ApiManage = function (_React$Component) {
             _this.setState(visible);
         };
 
+        _this.showDocument = function () {
+            _this.setState({
+                documentVisible: true
+            });
+        };
+
+        _this.closeDocument = function () {
+            _this.setState({
+                documentVisible: false
+            });
+        };
+
+        _this.showEditProject = function () {
+            _this.setState({
+                projectEditVisible: true
+            });
+        };
+
+        _this.closeEditProject = function () {
+            _this.setState({
+                projectEditVisible: false
+            });
+        };
+
+        _this.componentDidMount = function () {
+            _this.getAllPro();
+            _this.getAllAPI();
+        };
+
         _this.tableColumns = [{
             title: '请求路径',
             key: 'url',
-            width: 300,
+            width: 350,
             render: function render(text, record, index) {
                 return _react2.default.createElement(
                     'span',
@@ -46926,7 +46823,7 @@ var ApiManage = function (_React$Component) {
         }, {
             title: '请求类型',
             key: 'method',
-            width: 150,
+            width: 100,
             render: function render(text, record, index) {
                 return _react2.default.createElement(
                     'span',
@@ -46937,7 +46834,7 @@ var ApiManage = function (_React$Component) {
         }, {
             title: '创建时间',
             key: 'createTime',
-            width: 200,
+            width: 180,
             render: function render(text, record, index) {
                 return _react2.default.createElement(
                     'span',
@@ -46972,7 +46869,7 @@ var ApiManage = function (_React$Component) {
                     null,
                     _react2.default.createElement(
                         _button2.default,
-                        { icon: 'setting', onClick: function onClick() {
+                        { icon: 'edit', onClick: function onClick() {
                                 return _this.showEditModal(record);
                             } },
                         '\u7F16\u8F91'
@@ -47013,9 +46910,14 @@ var ApiManage = function (_React$Component) {
             editStatus: false,
             paramStatus: false,
             editParamStatus: false,
+
             searchParam: '',
+            searchPro: '',
+
             api: null,
             apis: null,
+            pros: null,
+
             url: '',
             method: 'GET',
             param: null,
@@ -47029,7 +46931,10 @@ var ApiManage = function (_React$Component) {
             addModalVisible: false,
             editModalVisible: false,
             paramModalVisible: false,
-            editParamModalVisible: false
+            editParamModalVisible: false,
+
+            documentVisible: false,
+            projectEditVisible: false
         };
         return _this;
     }
@@ -47043,7 +46948,13 @@ var ApiManage = function (_React$Component) {
     // 编辑API
 
 
+    // todo:获取全部项目
+
+
     // 获取全部API
+
+
+    // todo:通过项目名进行查询
 
 
     // 通过输入模糊查询API
@@ -47197,21 +47108,64 @@ var ApiManage = function (_React$Component) {
                 'section',
                 { id: 'container' },
                 _react2.default.createElement(
-                    'h2',
-                    { className: 'title' },
-                    '\u63A5\u53E3\u7BA1\u7406'
-                ),
-                _react2.default.createElement(
                     'div',
-                    { className: 'operations' },
+                    { className: 'title' },
                     _react2.default.createElement(
-                        _button2.default,
-                        { style: { float: 'right', marginTop: 4 }, type: 'primary', icon: 'plus', onClick: function onClick() {
-                                return _this2.showAddModal();
-                            } },
-                        '\u521B\u5EFA\u63A5\u53E3'
+                        'span',
+                        { style: { fontSize: 20, fontWeight: 'bold' } },
+                        '\u63A5\u53E3\u7BA1\u7406'
                     ),
-                    _react2.default.createElement(_input2.default, { placeholder: '\u8BF7\u8F93\u5165\u8BF7\u6C42\u8DEF\u5F84', style: { width: 250 }, value: this.state.searchParam, onChange: this.getAPIByParam })
+                    _react2.default.createElement(
+                        _tooltip2.default,
+                        { placement: 'bottom', title: '\u521B\u5EFA\u63A5\u53E3' },
+                        _react2.default.createElement(_icon2.default, { style: { fontSize: 18, marginLeft: 9, cursor: 'pointer' }, type: 'plus-circle-o', onClick: function onClick() {
+                                return _this2.showAddModal();
+                            } })
+                    ),
+                    _react2.default.createElement(
+                        'div',
+                        { style: { position: 'absolute', top: 3, left: 166 } },
+                        _react2.default.createElement(
+                            _select2.default,
+                            {
+                                placeholder: '\u8BF7\u9009\u62E9/\u8F93\u5165\u9879\u76EE\u540D\u79F0',
+                                style: { width: 200, marginLeft: 18 },
+                                value: this.state.searchPro,
+                                onSelect: this.getAPIByPro,
+                                showSearch: true,
+                                optionFilterProp: 'children',
+                                filterOption: function filterOption(input, option) {
+                                    return option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+                                }
+                            },
+
+                            // todo: 新增数据库操作类 并添加增删改查接口
+                            this.state.pros ? this.state.pros.map(function (item) {
+                                return _react2.default.createElement(
+                                    Option,
+                                    { key: item.key },
+                                    item.name
+                                );
+                            }) : null
+                        ),
+                        _react2.default.createElement(_input2.default, { placeholder: '\u8BF7\u8F93\u5165\u8BF7\u6C42\u8DEF\u5F84', style: { width: 250, marginLeft: 9 }, value: this.state.searchParam, onChange: this.getAPIByParam })
+                    ),
+                    _react2.default.createElement(
+                        'div',
+                        { className: 'header-btns' },
+                        _react2.default.createElement(
+                            'span',
+                            { className: 'header-btn', onClick: this.showEditProject },
+                            _react2.default.createElement(_icon2.default, { type: 'setting' }),
+                            '\u9879\u76EE\u914D\u7F6E'
+                        ),
+                        _react2.default.createElement(
+                            'span',
+                            { className: 'header-btn', style: { marginLeft: 12 }, onClick: this.showDocument },
+                            _react2.default.createElement(_icon2.default, { type: 'info-circle-o' }),
+                            '\u4F7F\u7528\u8BF4\u660E'
+                        )
+                    )
                 ),
                 _react2.default.createElement(_table2.default, {
                     columns: this.tableColumns,
@@ -47410,6 +47364,32 @@ var ApiManage = function (_React$Component) {
                                 } },
                             '\u683C\u5F0F\u5316\u5E76\u6821\u9A8C'
                         )
+                    )
+                ),
+                _react2.default.createElement(
+                    _modal2.default,
+                    {
+                        visible: this.state.documentVisible,
+                        title: '\u4F7F\u7528\u8BF4\u660E',
+                        onOk: this.closeDocument,
+                        onCancel: this.closeDocument },
+                    _react2.default.createElement(
+                        'div',
+                        null,
+                        '\u656C\u8BF7\u671F\u5F85'
+                    )
+                ),
+                _react2.default.createElement(
+                    _modal2.default,
+                    {
+                        visible: this.state.projectEditVisible,
+                        title: '\u9879\u76EE\u7BA1\u7406',
+                        onOk: this.closeEditProject,
+                        onCancel: this.closeEditProject },
+                    _react2.default.createElement(
+                        'div',
+                        null,
+                        '\u656C\u8BF7\u671F\u5F85'
                     )
                 ),
                 _react2.default.createElement(_editable_param_table2.default, { visible: this.state.addParamVisible, title: '\u53C2\u6570\u914D\u7F6E\u8868', dataSource: null, onOk: function onOk(value) {
@@ -65283,12 +65263,14 @@ var JsonFormatter = function () {
                 } else {
                     var value = '';
                     // 当为bool值或数字时,将引号去除
-                    if (!isNaN(Number(data[key])) || data[key] === "true" || data[key] === "false") {
+                    if (data[key] === "") {
+                        value = '""';
+                    } else if (!isNaN(Number(data[key])) || data[key] === "true" || data[key] === "false") {
                         value = data[key];
                     } else {
                         value = '"' + data[key] + '"';
                     }
-                    if (/[0-9]/.test(key)) {
+                    if (/[0-9]/.test(key) && isArray) {
                         if (count === length) {
                             result += "\n" + space + value;
                         } else {
@@ -65296,9 +65278,9 @@ var JsonFormatter = function () {
                         }
                     } else {
                         if (count === length) {
-                            result += "\n" + space + '"' + key + '"' + ": " + value;
+                            result += "\n" + space + '"' + key + '"' + ": " + ('' + value);
                         } else {
-                            result += "\n" + space + '"' + key + '"' + ": " + value + ",";
+                            result += "\n" + space + '"' + key + '"' + ": " + ('' + value) + ",";
                         }
                     }
                 }
@@ -65321,7 +65303,12 @@ var JsonFormatter = function () {
         key: 'diffInputType',
         value: function diffInputType(data) {
             var formatData = void 0;
-            var jsonObj = JSON.parse(data);
+            var jsonObj = void 0;
+            try {
+                jsonObj = JSON.parse(data);
+            } catch (e) {
+                jsonObj = eval('(' + this.excludeSpecial(data) + ')');
+            }
             if (jsonObj && jsonObj instanceof Array) {
                 formatData = this.toJsonObj(jsonObj, 1, true);
             } else if (jsonObj && jsonObj instanceof Object) {
@@ -65345,67 +65332,79 @@ var JsonFormatter = function () {
             }
             return count;
         }
-
-        // 检查JSON格式是否合法 返回错误信息相应行记录
-
+    }, {
+        key: 'excludeSpecial',
+        value: function excludeSpecial(s) {
+            // 去掉转义字符
+            s = s.replace(/[\\\/\b\f\n\r\t\s]/g, '');
+            return s;
+        }
     }, {
         key: 'isJSON',
+
+
+        // 检查JSON格式是否合法 返回错误信息相应行记录
         value: function isJSON(data) {
             var isJSON = true,
                 errName = void 0,
                 errStr = void 0,
                 errMsg = void 0;
             try {
-                JSON.parse(data);
+                eval('(' + this.excludeSpecial(data) + ')');
             } catch (e) {
-                var i = void 0,
-                    index = void 0,
-                    leftOffSet = 0,
-                    leftCount = 0,
-                    rightOffSet = 0,
-                    rightCount = 0;
-
-                // 设置返回参数
-                isJSON = false;
-                errName = e.name;
-                errMsg = e.message;
-
-                if (data[0] === "{" || data[0] === "[") {} else {
-                    errStr = '缺少起始符 "{" 或 "["';
-                    return { isJSON: isJSON, errName: errName, errMsg: errMsg, errStr: errStr };
-                }
-                if (data[data.length - 1] === "}" || data[data.length - 1] === "]") {} else {
-                    errStr = '缺少结束符 "}" 或 "]"';
-                    return { isJSON: isJSON, errName: errName, errMsg: errMsg, errStr: errStr };
-                }
-                i = Number(e.message.split('position ')[1]);
-                index = Number(e.message.split('position ')[1]);
-                while (leftCount < 2) {
-                    if (index <= leftOffSet) {
-                        return { isJSON: isJSON, errName: errName, errMsg: errMsg };
-                    }
-                    if (data.substring(index - leftOffSet, index).indexOf('\n') === -1) {
-                        leftOffSet++;
-                    } else {
-                        leftOffSet++;
-                        leftCount++;
-                        index = index - leftOffSet;
-                    }
-                }
-                index = Number(e.message.split('position')[1]);
-                while (rightCount < 1) {
-                    if (data.substring(index, index + rightOffSet).indexOf("}") !== -1) {
-                        return { isJSON: isJSON, errName: errName, errMsg: errMsg };
-                    }
-                    if (data.substring(index, index + rightOffSet).indexOf('\n') === -1) {
-                        rightOffSet++;
-                    } else {
-                        rightOffSet++;
-                        rightCount++;
-                        index = index + rightOffSet;
-                    }
-                }
-                errStr = data.substring(i - leftOffSet, i + rightOffSet);
+                //     let i,
+                //         index,
+                //         leftOffSet = 0,
+                //         leftCount = 0,
+                //         rightOffSet = 0,
+                //         rightCount = 0;
+                //
+                //     // 设置返回参数
+                //     isJSON = false;
+                //     errName = e.name;
+                //     errMsg = e.message;
+                //
+                //     if (data[0] === "{" || data[0] === "[") {
+                //
+                //     } else {
+                //         errStr = '缺少起始符 "{" 或 "["';
+                //         return {isJSON, errName, errMsg, errStr};
+                //     }
+                //     if (data[data.length - 1] === "}" || data[data.length - 1] === "]") {
+                //
+                //     } else {
+                //         errStr = '缺少结束符 "}" 或 "]"';
+                //         return {isJSON, errName, errMsg, errStr};
+                //     }
+                //     i = Number(e.message.split('position ')[1]);
+                //     index = Number(e.message.split('position ')[1]);
+                //     while (leftCount < 2) {
+                //         if (index <= leftOffSet) {
+                //             return {isJSON, errName, errMsg};
+                //         }
+                //         if ((data.substring((index - leftOffSet), index).indexOf('\n')) === -1) {
+                //             leftOffSet++;
+                //         } else {
+                //             leftOffSet++;
+                //             leftCount++;
+                //             index = index - leftOffSet;
+                //         }
+                //     }
+                //     index = Number(e.message.split('position')[1]);
+                //     while (rightCount < 1) {
+                //         if ((data.substring(index, (index + rightOffSet)).indexOf("}")) !== -1) {
+                //             return {isJSON, errName, errMsg};
+                //         }
+                //         if ((data.substring(index, (index + rightOffSet)).indexOf('\n')) === -1) {
+                //             rightOffSet++;
+                //         } else {
+                //             rightOffSet++;
+                //             rightCount++;
+                //             index = index + rightOffSet;
+                //         }
+                //     }
+                //     errStr = data.substring(i - leftOffSet, i + rightOffSet);
+                // }
             }
             return { isJSON: isJSON, errName: errName, errMsg: errMsg, errStr: errStr };
         }
@@ -65757,10 +65756,16 @@ var ParamDefine = function (_React$Component) {
                 if (i + 1 === indexes.length) {
                     data[curIndex]['paramType'] = value;
                     if (value[0] === 'object' || value[0] === 'array') {
+                        var paramName = void 0;
+                        if (value[0] === 'object') {
+                            paramName = '';
+                        } else if (value[0] === 'array') {
+                            paramName = 'array';
+                        }
                         data[curIndex]['children'] = [];
                         data[curIndex]['children'].push({
                             key: String(_this.state.count),
-                            paramName: '',
+                            paramName: paramName,
                             paramType: [],
                             illustration: '',
                             path: record.path + '/' + _this.state.count
@@ -65976,6 +65981,7 @@ var ParamDefine = function (_React$Component) {
                         visible: visible,
                         title: title,
                         defaultExpandAllRows: true,
+                        onCancel: onCancel,
                         footer: footer,
                         width: 1000 },
                     paramModel
@@ -67095,6 +67101,8 @@ var EditableCell = function (_React$Component) {
                 editable = _state.editable;
 
 
+            var editStatus = value === 'array' ? false : editable;
+
             var addIcon = _react2.default.createElement(
                 _tooltip2.default,
                 { title: '\u4FDD\u5B58', stlye: { pointer: 'cursor' } },
@@ -67106,7 +67114,7 @@ var EditableCell = function (_React$Component) {
             return _react2.default.createElement(
                 'span',
                 { className: 'editable-cell', style: { width: 180, display: 'inline-block', verticalAlign: 'middle' } },
-                editable ? _react2.default.createElement(
+                editStatus ? _react2.default.createElement(
                     'span',
                     { className: 'editable-cell-input-wrapper' },
                     _react2.default.createElement(_input2.default, {
@@ -67121,7 +67129,7 @@ var EditableCell = function (_React$Component) {
                 ) : _react2.default.createElement(
                     'div',
                     { className: 'editable-cell-input-wrapper', style: { marginLeft: 8, paddingTop: 1, width: 180, height: 28, lineHeight: '28px', overflowY: 'scroll' }, onClick: this.check.bind(this, true) },
-                    value || ' '
+                    value === 'array' ? '' : value || ' '
                 )
             );
         }
@@ -67163,6 +67171,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var Data_Parser = function () {
     function Data_Parser() {
         _classCallCheck(this, Data_Parser);
+
+        this.count = 1;
     }
 
     // 判断是对象还是数组
@@ -67186,11 +67196,10 @@ var Data_Parser = function () {
             var _this = this;
 
             var outputObj = {};
-            var arrItem = void 0,
-                count = 1;
+            var arrItem = void 0;
             dataSource.map(function (item) {
                 if (item.hasOwnProperty('children')) {
-                    if (item['paramType'][0] === 'array' && dataSource.length === 1 && count === 1) {
+                    if (item['paramType'][0] === 'array' && dataSource.length === 1 && _this.count === 1) {
                         arrItem = _this.arrayParser(item['children'], item['paramType'][1]);
                     } else if (item['paramType'][0] === 'array') {
                         outputObj[item['paramName']] = _this.arrayParser(item['children'], item['paramType'][1]);
@@ -67217,7 +67226,7 @@ var Data_Parser = function () {
                     }
                 }
             });
-            count++;
+            this.count++;
             return arrItem !== undefined ? arrItem : outputObj;
         }
     }, {

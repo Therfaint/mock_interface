@@ -44,10 +44,10 @@ class EditableCell extends React.Component {
         const editStatus = value === 'array' ? false : editable;
 
         const addIcon = (
-            <Tooltip title="保存" stlye={{pointer: 'cursor'}}>
+            <Tooltip overlay={<span>保存</span>} style={{pointer: 'cursor'}}>
                 <Icon type="check" onClick={()=>this.check(false)}/>
             </Tooltip>
-        )
+        );
 
         return (
 
@@ -56,7 +56,7 @@ class EditableCell extends React.Component {
                     editStatus ?
                         <span className="editable-cell-input-wrapper">
                             <Input
-                                style={{border: 'none', width:180}}
+                                style={{border: 'none', width:150}}
                                 value={value}
                                 suffix={addIcon}
                                 onChange={this.handleChange}
