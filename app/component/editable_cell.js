@@ -65,7 +65,7 @@ class EditableCell extends React.Component {
                         </span>
                         :
                         <div className="editable-cell-input-wrapper" style={{marginLeft: 8, paddingTop: 1, width: 180, height: 28, lineHeight: '28px', overflowY: 'scroll'}} onClick={this.check.bind(this, true)}>
-                            {value === 'array' ? '' : value || ' '}
+                            {value === 'array' ? '' : (typeof value === 'boolean' ? String(value) : value)}
                         </div>
                 }
             </span>

@@ -2,12 +2,15 @@
  * Created by therfaint- on 18/08/2017.
  */
 import stringOpts from './Parser_Options';
-import r from './Random'
+import r from './Random';
+import funcOpts from './Func_Options';
+
+const func = new funcOpts();
 
 export default class Data_Parser{
-    
+
     constructor(){
-        this.count = 1;
+        this.idCount = 1;
     }
 
     // 判断是对象还是数组
@@ -19,31 +22,43 @@ export default class Data_Parser{
         return isArray;
     }
 
-    // 对usrDefine数据进行处理
+    // 对usrDefine数据进行处理 在为数组长度设置时默认替换原数据的类型和长度
+    /**
+     @param {String} [input] 输入的字符串
+     @param {Object} [item] table结构中的每一条数据
+     @return {String | null} isArr === false ? 返回执行函数的值 : 不返回
+     */
     handleUsrDef = (input, item) => {
-        let reg = new RegExp(/^{{[0-9a-zA-Z]*\([0-9a-zA-Z]*\)}}$/);
+        let reg = new RegExp(/^{[0-9a-zA-Z]*\([0-9a-zA-Z,]*\)}$/);
         if(reg.test(input)){
+            let ret;
             // 判断是否是array情况
-            // 修改item的paramType
-
-            // 函数处理
-            console.log('function');
+            if(input.indexOf('array') !== -1){
+                let length = input.split('(')[1].split(')')[0];
+                item['paramType'] = ['array', length];
+            }else{
+                // 函数处理
+                let funcName = input.split('(')[0].substr(1);
+                let paramArr = input.split('(')[1].split(')')[0].split(',');
+                ret = func[funcName](paramArr);
+                return ret;
+            }
         }else{
-            // 数据处理
-            console.log('base')
+            return input;
         }
     };
 
     // 通过递归将特定数据结构进行数据的筛选以及随机赋值
+    /**
+     @param {Array} [dataSource] 进行遍历填充的table对象
+     @param {String} [type] object : array
+     @return {Object | Array} [arrItem | outputObj] object: 返回{key:val}, array: 返回[val,val,val]
+     */
     dataSourceFill(dataSource, type = 'object') {
         let outputObj = {};
-        let arrItem, usrDefStatus; //可以用来判断 是输入还是函数
+        let arrItem;
         dataSource.map((item)=>{
-            // 进行判断
-            // 1.输入:
-            // 2.函数:
-            // 2.1 数组下标的情况 修改paramType数组进行设置 直接修改item字段
-            // 2.2 正常函数返回
+            // 处理为自定义array长度情况
             this.handleUsrDef(item['usrDefine'], item);
             if(item.hasOwnProperty('children')){
                 // 数组+数组
@@ -60,20 +75,19 @@ export default class Data_Parser{
                     outputObj[item['paramName']] = this.dataSourceFill(item['children']);
                 }
             }else{
-                //判断自定义的输入 是否是函数形式 通过正则
-                //这里可以用函数的方式进行操作。根据函数的返回值赋值 注意情况判断 1.函数 2.字符串
+                // 最外层递归赋值
                 if(item.hasOwnProperty('usrDefine') && item['usrDefine']){
                     if(type === 'array')
-                        arrItem = item['usrDefine'];
+                        arrItem = this.handleUsrDef(item['usrDefine'], item);
                     else
-                        outputObj[item['paramName']] = item['usrDefine'];
+                        outputObj[item['paramName']] = this.handleUsrDef(item['usrDefine'], item);
                 }else{
                     switch (item['paramType'][0]){
                         case 'string':
                             if(type === 'array')
-                                arrItem = item['usrDefine'];
+                                arrItem = this.stringParser(item['paramType'][1]);
                             else
-                                outputObj[item['paramName']] = item['usrDefine'];
+                                outputObj[item['paramName']] = this.stringParser(item['paramType'][1]);
                             break;
                         case 'number':
                             if(type === 'array')
@@ -92,12 +106,15 @@ export default class Data_Parser{
                 }
             }
         });
-        this.count ++;
         return arrItem !== undefined ? arrItem : outputObj;
     };
 
     // 是否拥有下层子节点
     // 在拥有的情况下则不进行对象的解析 继续进行递归
+    /**
+     @param {Object} [source] 进行判断的对象
+     @return {boolean} [isExist] 是否为最底层节点
+     */
     isDeepestLayer(source) {
         let isExist = true;
         source.map(item=>{
@@ -110,16 +127,11 @@ export default class Data_Parser{
 
     // 字符串分析解释处理器
     stringParser(value) {
-        if(value === "@string")
-            return "请输入(字符串)";
         return stringOpts[value]();
     };
 
     // 字符串分析解释处理器
     numberParser(value) {
-        if(value === "@number"){
-            return '请输入(数字)';
-        }
         if(value.indexOf('-') === -1){
             return Number(value);
         }else{
@@ -127,7 +139,7 @@ export default class Data_Parser{
             min = value.split('-')[0];
             max = value.split('-')[1];
             if(value.charAt(0) === '.')
-                return r.getFloatRandomByRange(min, max)
+                return r.getFloatRandomByRange(min, max);
             else
                 return r.getIntRandomByRange(min, max);
         }
@@ -150,11 +162,14 @@ export default class Data_Parser{
     };
 
     // 数组分析解释处理器
+    /**
+     @param {Object} [value] 进行遍历填充的对象
+     @param {Number | String} [total] 填充数组长度
+     @return {Array} [arr] object: 返回{key:val}, array: 返回[val,val,val]
+     */
     arrayParser(value, total) {
-        debugger;
-        // todo: 数组的用户定义类型也需要设置
         let arr = [];
-        let arrItem, isPure;
+        let arrItem;
         let paramType = this.isPureArray(value); // 数组元素为基础类型则不进行递归提高效率
         for(let i=0;i< Number(total); i++) {
             switch (paramType) {
@@ -167,9 +182,9 @@ export default class Data_Parser{
                     break;
                 default:
                     let item = value[0];
-                    // if(item.hasOwnProperty('usrDefine') && item['usrDefine']){
-                    //     arr.push(item['usrDefine']);
-                    // }else{
+                    if(item.hasOwnProperty('usrDefine') && item['usrDefine']){
+                        arr.push(this.handleUsrDef(item['usrDefine'], {}));
+                    }else{
                         switch (item['paramType'][0]) {
                             case 'string':
                                 arr.push(this.stringParser(item['paramType'][1]));
@@ -181,7 +196,7 @@ export default class Data_Parser{
                                 arr.push(this.booleanParser(item['paramType'][1]));
                                 break;
                         }
-                    // }
+                    }
                     break;
             }
         }

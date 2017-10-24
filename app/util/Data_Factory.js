@@ -29,7 +29,7 @@ const getRandomDate = function() {
         case 2: day = r.getIntRandomByRange(0, 28);break;
         default: break;
     }
-    return year + '-' + month + '-' + day;
+    return year + '-' + (month >= 10 ? month : ('0' + month)) + '-' + (day >= 10 ? day : ('0' + day));
 };
 
 export default class Data_Factory {
@@ -58,7 +58,7 @@ export default class Data_Factory {
     getUrl() {
         const protocol = ['http://', 'https://'];
         const domain = ['www.baidu.com', 'www.163.com', 'www.qq.com', 'www.tongdun.cn', 'www.sina.com', 'www.alibaba.com', 'www.taobao.com', 'www.google.com'];
-        return protocol[Math.round(Math.random())] + domain[Math.floor(Math.random()*(domain.length+1))];
+        return protocol[Math.round(Math.random())] + domain[Math.floor(Math.random()*(domain.length))];
     }
 
     getEmail() {
@@ -101,7 +101,8 @@ export default class Data_Factory {
     }
 
     getDate() {
-        getRandomDate();
+        let date = getRandomDate();
+        return date;
     }
 
     getDateTime() {
@@ -109,7 +110,7 @@ export default class Data_Factory {
         h = r.getIntRandomByRange(0, 24);
         m = r.getIntRandomByRange(0, 60);
         s = r.getIntRandomByRange(0, 60);
-        return getRandomDate() + ' ' + (h > 10 ? h : ('0' + h)) + ':' + (m > 10 ? m : ('0' + m)) + ':' + (s > 10 ? s : ('0' + s))
+        return getRandomDate() + ' ' + (h >= 10 ? h : ('0' + h)) + ':' + (m >= 10 ? m : ('0' + m)) + ':' + (s >= 10 ? s : ('0' + s))
     }
 
     getVersion() {

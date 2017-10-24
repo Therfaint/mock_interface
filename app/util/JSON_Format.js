@@ -2,10 +2,94 @@
  * Created by therfaint- on 02/08/2017.
  */
 
+import dataParser from '../util/Data_Parser';
+
 class JsonFormatter {
 
     constructor() {
 
+    }
+
+    // 将输入的json同步至编辑器
+    updateJsonToTable(inputVal, tableVal) {
+        let d, updateStatus = true, ret;
+        try{
+            d = JSON.parse(this.toJsonStr(inputVal));
+        }catch(e){
+            updateStatus = false;
+        }
+        if(updateStatus){
+            // 构建新的TableData对象
+            ret = this.toTableDS(d);
+        }else{
+            // rollback
+            ret = tableVal;
+        }
+        return ret;
+    }
+
+    // 转为Table的数据结构
+    toTableDS(data, originPath, count = 1){
+        let dsModel = {
+            key: '',
+            paramName: '',
+            paramType: [],
+            usrDefine: '',
+            illustration: '',
+            path: ''
+        };
+        let tableDs = [];
+        for(let k in data){
+            let isArray;
+            let dsIns = {...dsModel};
+            if(originPath){
+                dsIns['key'] = originPath + '/' + String(count);
+                dsIns['path'] = originPath + '/' + String(count);
+            }else{
+                dsIns['key'] = String(count);
+                dsIns['path'] = String(count);
+            }
+
+            if(data instanceof Array){
+                isArray = true;
+                dsIns['paramName'] = 'array';
+            }else{
+                dsIns['paramName'] = k;
+            }
+
+            if(data[k] instanceof Array){
+                // 数组处理
+                dsIns['paramType'] = ['array', String(data[k].length)];
+                dsIns['usrDefine'] = `{array(${data[k].length})}`;
+                dsIns['children'] = [];
+                // 数组不考虑子元素类型属性不同的情况 只考虑第一个
+                dsIns['children'] = this.toTableDS(data[k], dsIns['path']);
+                tableDs.push(dsIns);
+                if(isArray){
+                    return tableDs;
+                }
+            }else if(data[k] instanceof Object){
+                // 对象处理
+                dsIns['paramType'] = ['object'];
+                dsIns['children'] = [];
+                // 数组不考虑子元素类型属性不同的情况 只考虑第一个
+                dsIns['children'] = this.toTableDS(data[k], dsIns['path']);
+                tableDs.push(dsIns);
+                if(isArray){
+                    return tableDs;
+                }
+            }else{
+                // 不继续递归遍历
+                dsIns['paramType'] = new Array(typeof data[k]);
+                dsIns['usrDefine'] = data[k];
+                tableDs.push(dsIns);
+                if(isArray){
+                    return tableDs;
+                }
+            }
+            count ++;
+        }
+        return tableDs;
     }
 
     // 将通过this.toJsonObj格式化后的格式转为Json对象
@@ -21,7 +105,6 @@ class JsonFormatter {
      * isArray: 如果传入data为数组请将该值设为true
      */
     toJsonBody(data, indent, isArray) {
-        // debugger
         let result = ''; // 返回值
         let space = ''; // 缩进长度
         let length = this.getLength(data); // 对象的key数量或数组的长度
@@ -39,7 +122,7 @@ class JsonFormatter {
                     } else {
                         result = result + "\n" + space + '[' + this.toJsonBody(data[key], indent, true) + '\n' + space + '],';
                     }
-                }else {
+                } else {
                     if (count === length) {
                         result = result + "\n" + space + '"' + key + '"' + ': [' + this.toJsonBody(data[key], indent, true) + '\n' + space + ']';
                     } else {
@@ -63,11 +146,11 @@ class JsonFormatter {
             } else {
                 let value = '';
                 // 当为bool值或数字时,将引号去除
-                if(data[key] === ""){
+                if (data[key] === "") {
                     value = '""';
-                }else if (!isNaN(Number(data[key])) || data[key] === "true" || data[key] === "false") {
+                } else if (!isNaN(Number(data[key])) || data[key] === "true" || data[key] === "false") {
                     value = data[key];
-                }else {
+                } else {
                     value = '"' + data[key] + '"';
                 }
                 if (/[0-9]/.test(key) && isArray) {
@@ -101,9 +184,9 @@ class JsonFormatter {
     diffInputType(data) {
         let formatData;
         let jsonObj;
-        try{
+        try {
             jsonObj = JSON.parse(data);
-        }catch(e) {
+        } catch (e) {
             jsonObj = eval('(' + this.excludeSpecial(data) + ')');
         }
         if (jsonObj && jsonObj instanceof Array) {

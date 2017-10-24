@@ -26,11 +26,13 @@ Notification.config({
 const options = [{
     value: 'string',
     label: 'String',
-    children: [{
-        value: '@string',
-        label: '@String'
-
-    }, {
+    children: [
+    //     {
+    //     value: '@string',
+    //     label: '@String'
+    //
+    // },
+        {
         value: '@name',
         label: 'Name'
 
@@ -74,10 +76,12 @@ const options = [{
 }, {
     value: 'number',
     label: 'Number',
-    children: [{
-        value: '@number',
-        label: '@Number'
-    }, {
+    children: [
+    //     {
+    //     value: '@number',
+    //     label: '@Number'
+    // },
+        {
         value: '10',
         label: '10'
     }, {
@@ -253,6 +257,9 @@ class ParamDefine extends React.Component {
 
     onCellChange = (record, key) => {
         return (value) => {
+            if(value.toString().indexOf('array') !== -1 && key === 'usrDefine'){
+                this.handleChange(['array'], record, false);
+            }
             let indexes, dataSource = [...this.state.dataSource];
             let curIndex, data = dataSource;
             indexes = record.path.split("/");
@@ -310,7 +317,7 @@ class ParamDefine extends React.Component {
         }
     };
 
-    handleChange = (value, record) => {
+    handleChange = (value, record, status = true) => {
         let path, indexes, children,
             dataSource = [...this.state.dataSource];
         let curIndex, data = dataSource;
@@ -330,17 +337,19 @@ class ParamDefine extends React.Component {
                     } else if (value[0] === 'array') {
                         paramName = 'array';
                     }
-                    data[curIndex]['children'] = [];
-                    data[curIndex]['children'].push({
-                        key: String(this.state.count),
-                        paramName,
-                        paramType: [],
-                        usrDefine: '',
-                        illustration: '',
-                        path: record.path + '/' + this.state.count
-                    });
+                    if(!data[curIndex].hasOwnProperty('children')){
+                        data[curIndex]['children'] = [];
+                        data[curIndex]['children'].push({
+                            key: String(this.state.count),
+                            paramName,
+                            paramType: [],
+                            usrDefine: '',
+                            illustration: '',
+                            path: record.path + '/' + this.state.count
+                        });
+                    }
                 } else {
-                    delete data[curIndex]['children'];
+                        delete data[curIndex]['children'];
                 }
                 this.setState({
                     dataSource,

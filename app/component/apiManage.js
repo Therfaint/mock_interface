@@ -387,9 +387,9 @@ class ApiManage extends React.Component{
             editUrl: record.url,
             editMethod: record.method,
             editParam: record.param,
-            editTableParam: JSON.parse(record.paramTable),
+            editTableParam: record.paramTable ? JSON.parse(record.paramTable) : null,
             editJson: JF.isString(record.json) ? record.json : (JSON.parse(record.json) instanceof Array ? JF.toJsonObj(JSON.parse(record.json), 1, true) : (JSON.parse(record.json) instanceof Object ? JF.toJsonObj(JSON.parse(record.json), 1, false) : null)),
-            editTableJson: JSON.parse(record.jsonTable),
+            editTableJson: record.jsonTable ? JSON.parse(record.jsonTable) : null,
             editStatus: false,
             editModalVisible: true
         })
@@ -511,7 +511,7 @@ class ApiManage extends React.Component{
     setParam = (e) => {
         this.setState({
             paramStatus: false,
-            param: e.target.value
+            param: e.target.value``
         })
     };
 
@@ -519,8 +519,9 @@ class ApiManage extends React.Component{
     setJSON = (e) => {
         this.setState({
             json: e.target.value,
-            addStatus: false
-        })
+            addStatus: false,
+            addTableJson: JF.updateJsonToTable(e.target.value, this.state.addTableJson)
+        });
     };
 
     // 编辑URL
@@ -559,8 +560,9 @@ class ApiManage extends React.Component{
     setEditJSON = (e) => {
         this.setState({
             editJson: e.target.value,
-            editStatus: false
-        })
+            editStatus: false,
+            editTableJson: JF.updateJsonToTable(e.target.value, this.state.editTableJson)
+        });
     };
 
     // 格式化JSON输入=>对象格式(实质:在字符串加上/n/t等)
@@ -968,9 +970,9 @@ class ApiManage extends React.Component{
                         敬请期待
                     </div>
                 </Modal>
-                <ParamTable visible={this.state.addParamVisible} title="参数配置表" dataSource={null} onOk={(value)=>this.onOk(value, 'param', 'addTableParam', 'addParamVisible')} onCancel={()=>this.onCancel('addParamVisible')}/>
+                <ParamTable visible={this.state.addParamVisible} title="参数配置表" dataSource={this.state.addTableParam} onOk={(value)=>this.onOk(value, 'param', 'addTableParam', 'addParamVisible')} onCancel={()=>this.onCancel('addParamVisible')}/>
                 <ParamTable visible={this.state.editParamVisible} title="参数配置表" dataSource={this.state.editTableParam} onOk={(value)=>this.onOk(value, 'editParam', 'editTableParam', 'editParamVisible')} onCancel={()=>this.onCancel('editParamVisible')}/>
-                <ParamTable visible={this.state.addJsonVisible} title="Json配置表" dataSource={null} onOk={(value)=>this.onOk(value, 'json', 'addTableJson', 'addJsonVisible')} onCancel={()=>this.onCancel('addJsonVisible')}/>
+                <ParamTable visible={this.state.addJsonVisible} title="Json配置表" dataSource={this.state.addTableJson} onOk={(value)=>this.onOk(value, 'json', 'addTableJson', 'addJsonVisible')} onCancel={()=>this.onCancel('addJsonVisible')}/>
                 <ParamTable visible={this.state.editJsonVisible} title="Json配置表" dataSource={this.state.editTableJson} onOk={(value)=>this.onOk(value, 'editJson', 'editTableJson', 'editJsonVisible')} onCancel={()=>this.onCancel('editJsonVisible')}/>
             </section>
         )
