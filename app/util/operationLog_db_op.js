@@ -1,5 +1,5 @@
 /**
- * Created by therfaint- on 01/08/2017.
+ * Created by therfaint- on 08/11/2017.
  */
 let mongoose = require('mongoose');
 let status = require('./DB_Op_Status');
@@ -13,11 +13,11 @@ const options = {
     }
 };
 
-module.exports = class apiDbUtil{
+module.exports = class opLogDbUtil{
 
     constructor(){
 
-        this.conn = mongoose.createConnection('mongodb://127.0.0.1:27017/api', options);
+        this.conn = mongoose.createConnection('mongodb://127.0.0.1:27017/op_history', options);
 
         this.conn.on('error', function(error){
             console.log('数据库连接失败!\n' + error);
@@ -30,53 +30,26 @@ module.exports = class apiDbUtil{
             console.log('数据库连接成功...');
         });
 
-        // todo: 是否新增ref或者进行多表查询
+        // todo: 如果加入模块可能字段就不一样了
 
-        this.apiSchema = new mongoose.Schema({
-            url: {
-                type: String,
-                required: true
-            },
-            param: {
-                type: mongoose.Schema.Types.Mixed
-            },
-            paramTable: {
-                type: mongoose.Schema.Types.Mixed
-            },
-            description: {
-                type: String,
-                required: true
-            },
-            method: {
-                type: String,
-                required: true
-            },
-            createTime: {
-                type: String,
-                required: true
-            },
-            json: {
-                type: mongoose.Schema.Types.Mixed,
-                required: true
-            },
-            jsonTable: {
-                type: mongoose.Schema.Types.Mixed,
-                required: true
-            },
+        this.opHistorySchema = new mongoose.Schema({
             refProId:{
                 type: String,
                 index: true
             },
-            refModuleId:{
+            opTime: {
                 type: String,
-                index: true
+                required: true
+            },
+            paramTable: {
+                type: mongoose.Schema.Types.Mixed
             }
         });
-        this.API = this.conn.model('api', this.apiSchema);
+        this.His = this.conn.model('op_history', this.opHistorySchema);
     }
 
     add(apiObj, callback){
-        let apiInstance = new this.API(apiObj);
+        let apiInstance = new this.His(apiObj);
         apiInstance.save(function (err, result) {
             if(err){
                 status.fail.msg = err;
@@ -88,41 +61,28 @@ module.exports = class apiDbUtil{
         });
     }
 
-    batchAdd(apiArr, proCode, type, moduleId, callback){
-
+    batchAdd(apiArr, proCode, callback){
         let bool = true;
-
-        if(type === 'module'){
-            apiArr.map(item=>{
-                this.update(item._id, {refModuleId: proCode}, function (status) {
-                    if (status.code === 500) {
-                        bool = false;
-                    }
-                })
-            });
-        }else{
-            apiArr.map(item=>{
-                let obj = {};
-                let urlArr = item.url.split('/');
-                urlArr[1] = proCode;
-                obj['url'] = urlArr.join('/');
-                obj['param'] = item.param;
-                obj['paramTable'] = item.paramTable;
-                obj['method'] = item.method;
-                obj['json'] = item.json;
-                obj['jsonTable'] = item.jsonTable;
-                obj['description'] = item.description;
-                obj['createTime'] = item.createTime;
-                obj['refProId'] = item.refProId;
-                obj['refModuleId'] = moduleId;
-                obj['lastUpdateTime'] = item.lastUpdateTime ? item.lastUpdateTime : item.createTime;
-                this.add(obj, function (status) {
-                    if (status.code === 500) {
-                        bool = false;
-                    }
-                })
-            });
-        }
+        apiArr.map(item=>{
+            let obj = {};
+            let urlArr = item.url.split('/');
+            urlArr[1] = proCode;
+            obj['url'] = urlArr.join('/');
+            obj['param'] = item.param;
+            obj['paramTable'] = item.paramTable;
+            obj['method'] = item.method;
+            obj['json'] = item.json;
+            obj['jsonTable'] = item.jsonTable;
+            obj['description'] = item.description;
+            obj['refProId'] = item.refProId;
+            obj['createTime'] = item.createTime;
+            obj['lastUpdateTime'] = item.lastUpdateTime ? item.lastUpdateTime : item.createTime;
+            this.add(obj, function (status) {
+                if (status.code === 500) {
+                    bool = false;
+                }
+            })
+        });
         if(bool){
             callback(true);
         }else{
@@ -131,7 +91,7 @@ module.exports = class apiDbUtil{
     }
 
     deleteById(id, callback){
-        this.API.remove({_id: id}, function (err,result) {
+        this.His.remove({_id: id}, function (err,result) {
             if(err){
                 status.fail.msg = err;
                 callback(status.fail);
@@ -144,7 +104,7 @@ module.exports = class apiDbUtil{
 
     update(id, param, callback){
         let update = {$set : param};
-        this.API.update({_id: id}, update, function (err,result) {
+        this.His.update({_id: id}, update, function (err,result) {
             if(err){
                 status.fail.msg = err;
                 callback(status.fail);
@@ -158,11 +118,10 @@ module.exports = class apiDbUtil{
     getAPI(url, type, data, callback){
         let selectParam;
         if(type === 'POST')
-            // selectParam = {url: url, method: type, param: data};
-            selectParam = {url: url, method: type};
+            selectParam = {url: url, method: type, param: data};
         else
             selectParam = {url: url, method: type};
-        this.API.find(selectParam, {json: 1, param: 1}, function (err,result) {
+        this.His.find(selectParam, {json: 1, param: 1}, function (err,result) {
             if(err){
                 status.fail.msg = err;
                 callback(status.fail);
@@ -175,7 +134,7 @@ module.exports = class apiDbUtil{
 
     queryByParams(param, proCode, callback){
         let reg = new RegExp(`/${proCode}/${param}`);
-        this.API.find({url: reg},function (err,result) {
+        this.His.find({url: reg},function (err,result) {
             if(err){
                 status.fail.msg = err;
                 callback(status.fail);
@@ -187,7 +146,7 @@ module.exports = class apiDbUtil{
     }
 
     selectAll(callback){
-        this.API.find({}, {}, {sort: {'createTime': -1}}, function (err,result) {
+        this.His.find({}, {}, {sort: {'createTime': -1}}, function (err,result) {
             if(err){
                 status.fail.msg = err;
                 callback(status.fail);
@@ -199,7 +158,7 @@ module.exports = class apiDbUtil{
     }
 
     getAllById(id, callback){
-        this.API.find({refProId: id}, function(err,result){
+        this.His.find({refProId: id}, function(err,result){
             if(err){
                 status.fail.msg = err;
                 callback(status.fail);
@@ -210,22 +169,13 @@ module.exports = class apiDbUtil{
         })
     }
 
-    getAllByModuleId(id, callback){
-        this.API.find({refModuleId: id}, function(err,result){
-            if(err){
-                callback({})
-            }else{
-                callback(result);
-            }
-        })
-    }
-
     importAPIs(proId, apiArr, callback){
-        this.API.find({ _id: { $in: apiArr }}, function (err,result) {
+        this.His.find({ _id: { $in: apiArr }}, function (err,result) {
             if(err){
                 callback(false, err);
             }else{
                 result.map(item=>{
+                    delete item._id;
                     item.refProId = proId;
                 });
                 callback(true, result);

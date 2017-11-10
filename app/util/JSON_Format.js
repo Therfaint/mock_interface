@@ -12,6 +12,16 @@ class JsonFormatter {
 
     // 将输入的json同步至编辑器
     updateJsonToTable(inputVal, tableVal) {
+        if(!inputVal){
+            return [{
+                key: '',
+                paramName: '',
+                paramType: [],
+                usrDefine: '',
+                illustration: '',
+                path: ''
+            }];
+        }
         let d, updateStatus = true, ret;
         try{
             d = JSON.parse(this.toJsonStr(inputVal));
@@ -187,7 +197,11 @@ class JsonFormatter {
         try {
             jsonObj = JSON.parse(data);
         } catch (e) {
-            jsonObj = eval('(' + this.excludeSpecial(data) + ')');
+            try{
+                jsonObj = eval('(' + this.excludeSpecial(data) + ')');
+            } catch (e) {
+
+            }
         }
         if (jsonObj && jsonObj instanceof Array) {
             formatData = this.toJsonObj(jsonObj, 1, true);

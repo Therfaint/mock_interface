@@ -8,6 +8,7 @@ import dataFactory from './Data_Factory';
 let DF = new dataFactory;
 
 export default {
+    "@id": DF.getId,
     "@name": DF.getName,
     "@sex": DF.getSex,
     "@url": DF.getUrl,

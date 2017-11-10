@@ -44,7 +44,10 @@ export default class Data_Parser{
                 return ret;
             }
         }else{
-            return input;
+            if(item['paramType'][0] !== 'array' && item['paramType'][0] !== 'object'){
+                item['paramType'] = [typeof input];
+                return input;
+            }
         }
     };
 
@@ -58,8 +61,10 @@ export default class Data_Parser{
         let outputObj = {};
         let arrItem;
         dataSource.map((item)=>{
-            // 处理为自定义array长度情况
-            this.handleUsrDef(item['usrDefine'], item);
+            if(item['usrDefine']){
+                // 处理为自定义array长度情况
+                this.handleUsrDef(item['usrDefine'], item);
+            }
             if(item.hasOwnProperty('children')){
                 // 数组+数组
                 if(item['paramType'][0] === 'array' && type === 'array') {
@@ -127,11 +132,17 @@ export default class Data_Parser{
 
     // 字符串分析解释处理器
     stringParser(value) {
+        if(value === '@string'){
+            return 'Hello World';
+        }
         return stringOpts[value]();
     };
 
     // 字符串分析解释处理器
     numberParser(value) {
+        if(value === '@number'){
+            return '666';
+        }
         if(value.indexOf('-') === -1){
             return Number(value);
         }else{
@@ -183,7 +194,7 @@ export default class Data_Parser{
                 default:
                     let item = value[0];
                     if(item.hasOwnProperty('usrDefine') && item['usrDefine']){
-                        arr.push(this.handleUsrDef(item['usrDefine'], {}));
+                        arr.push(this.handleUsrDef(item['usrDefine'], {paramType: ['arrayItem']}));
                     }else{
                         switch (item['paramType'][0]) {
                             case 'string':

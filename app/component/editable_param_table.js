@@ -26,13 +26,15 @@ Notification.config({
 const options = [{
     value: 'string',
     label: 'String',
-    children: [
-    //     {
-    //     value: '@string',
-    //     label: '@String'
-    //
-    // },
-        {
+    children: [{
+        value: '@string',
+        label: '@String'
+
+    }, {
+        value: '@id',
+        label: 'Id'
+
+    }, {
         value: '@name',
         label: 'Name'
 
@@ -76,12 +78,10 @@ const options = [{
 }, {
     value: 'number',
     label: 'Number',
-    children: [
-    //     {
-    //     value: '@number',
-    //     label: '@Number'
-    // },
-        {
+    children: [{
+        value: '@number',
+        label: '@Number'
+    }, {
         value: '10',
         label: '10'
     }, {
@@ -93,6 +93,9 @@ const options = [{
     }, {
         value: '100',
         label: '100'
+    },{
+        value: '200',
+        label: '200'
     }, {
         value: '0-1',
         label: 'INT[0, 1]'
@@ -144,6 +147,19 @@ const options = [{
     value: 'array',
     label: 'Array',
     children: [{
+        value: '1',
+        label: '@Array'
+
+    }, {
+        value: '2',
+        label: 'Array(2)'
+    },{
+        value: '3',
+        label: 'Array(3)'
+    },{
+        value: '5',
+        label: 'Array(5)'
+    }, {
         value: '10',
         label: 'Array(10)'
 
@@ -156,12 +172,9 @@ const options = [{
         label: 'Array(30)'
 
     }, {
-        value: '40',
-        label: 'Array(40)'
-
-    }, {
         value: '50',
         label: 'Array(50)'
+
     }],
 },];
 
@@ -175,6 +188,7 @@ class ParamDefine extends React.Component {
             dataIndex: 'paramName',
             render: (text, record, index) => (
                 <EditableCell
+                    key="paramName"
                     value={record.paramName}
                     onChange={this.onCellChange(record, 'paramName')}
                 />
@@ -201,6 +215,7 @@ class ParamDefine extends React.Component {
             dataIndex: 'usrDefine',
             render: (text, record, index) => (
                 <EditableCell
+                    key="usrDefine"
                     value={record.usrDefine}
                     onChange={this.onCellChange(record, 'usrDefine')}
                 />
@@ -211,6 +226,7 @@ class ParamDefine extends React.Component {
             dataIndex: 'illustration',
             render: (text, record, index) => (
                 <EditableCell
+                    key="illustration"
                     value={record.illustration}
                     onChange={this.onCellChange(record, 'illustration')}
                 />
@@ -257,7 +273,7 @@ class ParamDefine extends React.Component {
 
     onCellChange = (record, key) => {
         return (value) => {
-            if(value.toString().indexOf('array') !== -1 && key === 'usrDefine'){
+            if (value.toString().indexOf('array') !== -1 && key === 'usrDefine') {
                 this.handleChange(['array'], record, false);
             }
             let indexes, dataSource = [...this.state.dataSource];
@@ -317,8 +333,8 @@ class ParamDefine extends React.Component {
         }
     };
 
-    handleChange = (value, record, status = true) => {
-        let path, indexes, children,
+    handleChange = (value, record) => {
+        let indexes, children,
             dataSource = [...this.state.dataSource];
         let curIndex, data = dataSource;
         indexes = record.path.split("/");
@@ -337,7 +353,7 @@ class ParamDefine extends React.Component {
                     } else if (value[0] === 'array') {
                         paramName = 'array';
                     }
-                    if(!data[curIndex].hasOwnProperty('children')){
+                    if (!data[curIndex].hasOwnProperty('children')) {
                         data[curIndex]['children'] = [];
                         data[curIndex]['children'].push({
                             key: String(this.state.count),
@@ -349,7 +365,7 @@ class ParamDefine extends React.Component {
                         });
                     }
                 } else {
-                        delete data[curIndex]['children'];
+                    delete data[curIndex]['children'];
                 }
                 this.setState({
                     dataSource,
@@ -432,10 +448,21 @@ class ParamDefine extends React.Component {
     };
 
     componentWillReceiveProps(nextProps) {
-        if (nextProps.dataSource) {
+        if (nextProps.dataSource && nextProps.dataSource.length) {
             this.setState({
                 dataSource: nextProps.dataSource,
                 count: this.getDeepestCount(nextProps.dataSource) + 1
+            })
+        } else {
+            this.setState({
+                dataSource: [{
+                    key: '1',
+                    paramName: '',
+                    paramType: [],
+                    usrDefine: '',
+                    illustration: '',
+                    path: '1'
+                }]
             })
         }
     }
@@ -456,6 +483,7 @@ class ParamDefine extends React.Component {
                 dataSource={ dataSource }
                 columns={ this.columns }
                 pagination={ false }
+                // defaultExpandAllRows={true}
             />
         );
 
@@ -466,7 +494,6 @@ class ParamDefine extends React.Component {
                 <Modal
                     visible={visible}
                     title={title}
-                    defaultExpandAllRows={true}
                     onCancel={onCancel}
                     footer={footer}
                     maskClosable={false}

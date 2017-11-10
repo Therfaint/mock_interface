@@ -4,14 +4,22 @@
 
 let mongoose = require('mongoose');
 let status = require('./DB_Op_Status');
+let apiDbUtil = require('./api_db_op');
 
 mongoose.Promise = global.Promise;
+
+const options = {
+    server: {
+        auto_reconnect: true,
+        poolSize: 10
+    }
+};
 
 module.exports = class proDbUtil{
 
     constructor(){
 
-        this.conn = mongoose.createConnection('mongodb://127.0.0.1:27017/project');
+        this.conn = mongoose.createConnection('mongodb://127.0.0.1:27017/project', options);
 
         this.conn.on('error', function(error){
             console.log('数据库连接失败!\n' + error);
@@ -26,8 +34,7 @@ module.exports = class proDbUtil{
 
         this.proSchema = new mongoose.Schema({
             projectCode: {
-                type: String,
-                required: true
+                type: String
             },
             projectName: {
                 type: String,
@@ -40,6 +47,17 @@ module.exports = class proDbUtil{
             createTime: {
                 type: String,
                 required: true
+            },
+            lastUpdateTime: {
+                type: String,
+                required: true
+            },
+            createBy:{
+                type: String
+            },
+            tag: {
+                type: Boolean,
+                default: false,
             }
         });
 
@@ -53,22 +71,21 @@ module.exports = class proDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log(proObj.projectName + ' 添加成功!');
-                callback(status.success);
+                console.log(result._id + ' 添加成功!');
+                callback(status.success, result);
             }
         });
     }
 
     // 批量删除
-    // todo: 考虑级联删除
-    // eg: db.users.remove({"_id":{ $in: [ 1,2,3]})
     deleteById(id, callback){
         this.PRO.remove({_id: id}, function (err,result) {
             if(err){
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log('_id: '+ id +' 删除成功!');
+                console.log('_id: '+ result._id +' 删除成功!');
+                // todo:删除ref中的相应接口
                 callback(status.success, result);
             }
         })
@@ -81,14 +98,25 @@ module.exports = class proDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log('_id: '+ id +' 更新成功!');
+                console.log('_id: '+ result._id +' 更新成功!');
                 callback(status.success, result);
             }
         })
     }
 
+    updateLastUpdateTime(id, time){
+        let update = {lastUpdateTime : time};
+        this.PRO.update({_id: id}, update, function (err,result) {
+            if(err){
+                console.log('更新失败:' + err);
+            }else{
+                console.log('最近更新时间 更新成功!');
+            }
+        })
+    }
+
     selectAll(callback){
-        this.PRO.find({}, {}, {sort: {'createTime': -1}}, function (err,result) {
+        this.PRO.find({}, {}, {sort: {'lastUpdateTime': -1}}, function (err,result) {
             if(err){
                 status.fail.msg = err;
                 callback(status.fail);
@@ -99,6 +127,49 @@ module.exports = class proDbUtil{
         })
     }
 
-    // todo: 保留接口 当项目删除时删除关联的API
+    selectById(id, resolve, reject){
+        this.PRO.findById(id, function (err,result) {
+            if(err){
+                reject();
+            }else{
+                result ? resolve() : reject();
+            }
+        })
+    }
 
+    selectProById(id, callback){
+        this.PRO.findById(id, function (err,result) {
+            if(err){
+                status.fail.msg = err;
+                callback(status.fail);
+            }else{
+                console.log('项目查询成功!');
+                callback(status.success, result);
+            }
+        })
+    }
+
+    queryByCode(param, callback){
+        let reg = new RegExp(param);
+        this.PRO.find({projectCode: reg},function (err,result) {
+            if(err){
+                status.fail.msg = err;
+                callback(status.fail);
+            }else{
+                callback(status.success, result);
+            }
+        })
+    }
+
+    queryByName(param, callback){
+        let reg = new RegExp(param);
+        this.PRO.find({projectName: reg},function (err,result) {
+            if(err){
+                status.fail.msg = err;
+                callback(status.fail);
+            }else{
+                callback(status.success, result);
+            }
+        })
+    }
 };

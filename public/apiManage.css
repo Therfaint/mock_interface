@@ -2,9 +2,23 @@ a {
     text-decoration: none;
 }
 
-#container{
-    padding: 10px 20px;
-    min-width: 1200px;
+body{
+    background-color: #f0f0f0;
+}
+
+.pro-container{
+    min-width: 1000px;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.wiki-doc{
+    min-width: 1000px;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    font-size: 14px;
 }
 
 .op-btn {
@@ -53,4 +67,363 @@ a {
 
 .header-btn:hover{
     color: #108ee9;
+}
+
+.wiki-doc table{
+    display: table;
+    border-collapse: collapse;
+    border-spacing: 2px;
+    border-color: grey;
+}
+
+.wiki-doc tbody {
+    display: table-row-group;
+    vertical-align: middle;
+    border-color: inherit;
+}
+
+.wiki-doc tr {
+    display: table-row;
+    vertical-align: inherit;
+    border-color: inherit;
+}
+
+.wiki-doc td{
+    border: 1px solid #ddd;
+    padding: 7px 10px;
+    vertical-align: top;
+    text-align: left;
+    min-width: 8px;
+}
+
+.interface-ins-item{
+    margin-bottom: 9px;
+    font-size: 15px;
+}
+
+.api-ins-item{
+    padding: 19px 0;
+}
+
+.nav-container{
+    position: relative;
+    padding: 16px 0 10px;
+    border-bottom: 1px dashed #ccc;
+}
+
+.submit-btn:after{
+    content: '我是底线';
+    position: absolute;
+    bottom: -9px;
+    left: 50%;
+    margin-left: -24px;
+    background-color: #fff;
+}
+
+.vote-satisfy:after{
+    content: '我是分割线';
+    position: absolute;
+    bottom: -9px;
+    left: 50%;
+    margin-left: -30px;
+    background-color: #fff;
+}
+
+.vote-area:after{
+    content: '我是分割线';
+    position: absolute;
+    bottom: -9px;
+    left: 50%;
+    margin-left: -30px;
+    background-color: #fff;
+}
+
+.nav-container:after{
+    content: '我是目录的底线';
+    position: absolute;
+    left: 50%;
+    margin-left: -49px;
+    background-color: #fff;
+}
+
+.nav-item-container{
+    position: relative;
+    margin-bottom: 9px;
+}
+
+.nav_interface{
+    padding-left: 20px;
+    display: inline-block;
+}
+
+.nav_interface:before{
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: black;
+    position: absolute;
+    left: 0;
+    top: 9px;
+    z-index: 666;
+}
+
+.search-fixed-header{
+    padding: 0 20px;
+    margin: 0 auto;
+    min-width: 1000px;
+    max-width: 1200px;
+    line-height: 66px;
+    vertical-align: middle;
+    z-index: 998;
+    background: #fff;
+    border-bottom: 1px solid #ebebeb;
+    position: fixed;
+    left: 0;
+    right: 0;
+}
+
+.user-evaluate{
+    background: #fff;
+    padding-bottom: 20px;
+}
+
+.vote-container{
+    margin-top: 9px;
+    padding: 20px;
+}
+
+.vote-area{
+    position: relative;
+    padding: 0 0 15px;
+    border-bottom: 1px dashed #ccc;
+}
+
+.vote-satisfy{
+    position: relative;
+    padding: 0 0 15px;
+    margin: 0 20px;
+    border-bottom: 1px dashed #ccc;
+}
+
+.vote-item:first-child{
+    margin-top: 18px;
+}
+
+.vote-item{
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+.vote-item:last-child{
+    margin-bottom: 18px;
+}
+
+.icon-list .icon-item{
+    position: relative;
+    text-align: center;
+    cursor: pointer;
+    line-height: 100px;
+    color: #555;
+    -webkit-transition: all .3s;
+    transition: all .3s;
+    margin: 3px 0;
+    border-radius: 4px;
+    background-color: #fff;
+    overflow: hidden;
+    padding-bottom: 10px;
+    width: 33.3%;
+    display: inline-block;
+}
+
+.word span{
+    display: inline-block;
+    width: 50px;
+    line-height: 20px;
+    text-align: center;
+}
+
+.icon-list .icon-item .word{
+    opacity: 0;
+    font-size: 12px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-top: 12px;
+    margin-left: -25px;
+}
+
+.icon-item:hover{
+    -webkit-transition: all 1.2s;
+    -moz-transition: all 1.2s;
+    -ms-transition: all 1.2s;
+    -o-transition: all 1.2s;
+    transition: all 1.2s;
+    background-color: #108ee9;
+    color: white;
+}
+
+.icon-item:hover > i {
+    -webkit-transform: scale(1.2);
+    -moz-transform: scale(1.2);
+    -ms-transform: scale(1.2);
+    -o-transform: scale(1.2);
+    transform: scale(1.2);
+    -webkit-transition: transform 1.2s;
+    -moz-transition: transform 1.2s;
+    -ms-transition: transform 1.2s;
+    -o-transition: transform 1.2s;
+    transition: transform 1.2s;
+}
+
+.icon-item:hover > .word{
+    -webkit-transition: opacity,margin-top .8s;
+    -moz-transition: opacity,margin-top .8s;
+    -ms-transition: opacity,margin-top .8s;
+    -o-transition: opacity,margin-top .8s;
+    transition: opacity,margin-top .8s;
+    opacity: 1;
+    margin-top: -22px;
+}
+
+.icon-select{
+    background-color: #108ee9!important;
+    color: white!important;
+}
+
+.icon-select i{
+    -webkit-transform: scale(1.2)!important;
+    -moz-transform: scale(1.2)!important;
+    -ms-transform: scale(1.2)!important;
+    -o-transform: scale(1.2)!important;
+    transform: scale(1.2)!important;
+}
+
+.icon-select .word{
+    opacity: 1!important;
+    margin-top: -22px!important;
+}
+
+.vote-footer{
+    padding: 20px;
+    position: relative;
+}
+
+.submit-btn{
+    position: relative;
+    padding: 0 0 20px;
+    border-bottom: 1px dashed #ccc;
+}
+
+.wiki-operation-header{
+    padding: 0 20px;
+    margin: 0 auto;
+    min-width: 1000px;
+    max-width: 1200px;
+    line-height: 66px;
+    vertical-align: middle;
+    z-index: 998;
+    background: #fff;
+    border-bottom: 1px solid #ebebeb;
+    /*position: fixed;*/
+    /*left: 0;*/
+    /*right: 0;*/
+}
+
+.wiki-doc-content{
+    padding: 0 20px 20px;
+    background: #fff;
+}
+
+.down{
+    box-shadow: 0 0 5px #888;
+}
+
+.pro-items-container{
+    padding: 80px 20px 20px;
+    background: #fff;
+}
+
+.pro-item{
+    line-height: 36px;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.clear-input{
+    opacity: 0.3;
+    cursor: pointer;
+}
+
+.clear-input:hover{
+    opacity: 0.5;
+}
+
+.level-1{
+    padding-left: 0;
+}
+
+.level-2{
+    padding-left: 20px;
+}
+
+.level-3{
+    padding-left: 40px;
+}
+
+.level-4{
+    padding-left: 60px;
+}
+
+.level-5{
+    padding-left: 80px;
+}
+
+.level-6{
+    padding-left: 100px;
+}
+
+.level-7{
+    padding-left: 120px;
+}
+
+.catalog-1{
+
+}
+
+.catalog-2{
+    padding-left: 40px;
+}
+
+.catalog-2:before{
+    margin-left: 20px;
+}
+
+.jump-tools{
+    cursor: pointer;
+    position: fixed;
+    bottom: 5%;
+    right: 5%;
+    /*width: 40px;*/
+    /*height: 40px;*/
+    /*border-radius: 50%;*/
+}
+
+.back-top{
+
+}
+
+.back-home{
+    margin-bottom: 9px;
+}
+
+.keep-top-tag{
+    font-size: 12px;
+    color: rgb(255, 85, 0);
+    /*color: red;*/
+    margin-right: 9px;
+    padding: 0 8px;
+    border-radius: 4px;
+    border: 1px solid #e9e9e9;
+    cursor: pointer;
 }

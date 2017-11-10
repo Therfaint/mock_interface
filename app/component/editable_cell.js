@@ -37,17 +37,26 @@ class EditableCell extends React.Component {
         this.setState({ editable: true });
     };
 
+    // shouldComponentUpdate(nextProps, nextState){
+    //     console.log(nextProps,nextState)
+    //     if(!nextProps.value && !nextState.editable){
+    //         return false;
+    //     }else{
+    //         return true;
+    //     }
+    // }
+
+    componentWillReceiveProps(nextProps) {
+        this.setState({
+            value: nextProps.value ? nextProps.value : ''
+        })
+    }
+
     render() {
 
         const { value, editable } = this.state;
 
-        const editStatus = value === 'array' ? false : editable;
-
-        const addIcon = (
-            <Tooltip overlay={<span>保存</span>} style={{pointer: 'cursor'}}>
-                <Icon type="check" onClick={()=>this.check(false)}/>
-            </Tooltip>
-        );
+        let editStatus = value === 'array' ? false : ( value === '' ? true : editable);
 
         return (
 
@@ -56,15 +65,15 @@ class EditableCell extends React.Component {
                     editStatus ?
                         <span className="editable-cell-input-wrapper">
                             <Input
-                                style={{border: 'none', width:150}}
+                                style={{width:150}}
                                 value={value}
-                                suffix={addIcon}
                                 onChange={this.handleChange}
+                                onBlur={()=>this.check(false)}
                                 onPressEnter={()=>this.check(false)}
                             />
                         </span>
                         :
-                        <div className="editable-cell-input-wrapper" style={{marginLeft: 8, paddingTop: 1, width: 180, height: 28, lineHeight: '28px', overflowY: 'scroll'}} onClick={this.check.bind(this, true)}>
+                        <div className="editable-cell-input-wrapper" style={{marginLeft: 8, paddingTop: 1, width: 180, height: 28, lineHeight: '28px'}} onClick={this.check.bind(this, true)}>
                             {value === 'array' ? '' : (typeof value === 'boolean' ? String(value) : value)}
                         </div>
                 }

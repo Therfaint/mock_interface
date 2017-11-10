@@ -39,6 +39,15 @@ export default class Data_Factory {
 
     }
 
+    getId() {
+        const letter = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+        let idStr = '';
+        for (let i =0; i<10;i++){
+            idStr = idStr + letter[Math.floor(Math.random()*(letter.length))];
+        }
+        return idStr;
+    }
+
     getName() {
         const firstName = ['浩', '伟', '鑫', '荣', '雨', '文', '雅', '颖', '熙', '夕', '兮', '白', '然', '时', '珍', '龙', '辰', '春', '夏', '秋', '冬'];
         const lastName = ['王', '李' , '田', '陈', '崔', '周', '郑', '黄', '余', '姚', '高', '张', '肖', '童', '孔', '孟'];

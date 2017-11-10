@@ -6,24 +6,28 @@ let router = express.Router();
 let app = express();
 let bodyParser = require('body-parser');
 let apiHandler = require('./app/util/api_db_op');
+let moduleHandler = require('./app/util/module_db_op');
+let proHandler = require('./app/util/project_db_op');
+// let opHistoryHandler = require('./app/util/operationLog_db_op');
 
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
-// let proHandler = require('./app/util/project_db_op');
 
 let api = new apiHandler();
-// let pro = new proHandler();
+let mod = new moduleHandler();
+let pro = new proHandler();
+// let his = new opHistoryHandler();
 
 const webpack = require('webpack');
-const webpackHotMiddleWare = require('webpack-hot-middleware');
-const webpackDevMiddleWare = require('webpack-dev-middleware');
-const config = require('./webpack.config');
-const compiler = webpack(config);
-app.use(webpackDevMiddleWare(compiler, {noInfo: true}));
-app.use(webpackHotMiddleWare(compiler));
+
+// const webpackHotMiddleWare = require('webpack-hot-middleware');
+// const webpackDevMiddleWare = require('webpack-dev-middleware');
+// const config = require('./webpack.config');
+// const compiler = webpack(config);
+// app.use(webpackDevMiddleWare(compiler, {noInfo: true}));
+// app.use(webpackHotMiddleWare(compiler));
 
 app.use(express.static('public'));
-
 
 app.all('*', function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -44,32 +48,75 @@ const renderFullPage = () => {
     	</head>
     	<body>
     		<section id="todoapp" class="todoapp"></section>
-    		<script src="./bundle.js"></script>
+    		<script src="/bundle.js"></script>
     	</body>
     </html>
     `
 };
 
-// 获取初始页面
+const notFound = () => {
+    return `
+    <!doctype html>
+    <html lang="utf-8">
+    	<head>
+    	</head>
+    	<body>
+    		<section>Page Not Found</section>
+    	</body>
+    </html>
+    `
+};
+
+// 重定向到首页
 app.get('/', function (req, res) {
+    res.redirect('/project');
+});
+
+// project页面
+app.get('/project', function (req, res) {
     const page = renderFullPage();
     res.status(200).send(page);
 });
 
+// wiki页面
+app.get('/wiki/pageId=*', function (req, res) {
+    // 判断pageId是否存在 不存在返回404 Not Found
+    let pageId = req.url.split('pageId=')[1];
+    pro.selectById(pageId, function(){
+        const page = renderFullPage();
+        res.status(200).send(page);
+    }, function () {
+        res.status(200).send(notFound());
+    });
+});
+
+app.post('/saveVote.json', function (req, res) {
+        res.status(200).json({
+            success: true,
+            msg: '感谢您提出的宝贵建议'
+        })
+});
+
 /* 接口操作 */
-// todo: 字段和输入加上project字段
-app.post('/saveApi', function (req, res) {
+
+app.post('/saveApi.json', function (req, res) {
+    console.log(req.body.paramTable)
     let apiObj = {
-        url: req.body.url,
+        // proCode: req.body.proCode,
+        url: `/${req.body.proCode}${req.body.url}`,
         param: req.body.param,
         paramTable: req.body.paramTable,
         method: req.body.method.toUpperCase(),
         createTime: req.body.createTime,
         json: req.body.json,
         jsonTable: req.body.jsonTable,
+        description: req.body.description,
+        refProId: req.body.proId,
+        refModuleId: req.body.moduleId
     };
     api.add(apiObj, function (status) {
         if (status.code === 200) {
+            pro.updateLastUpdateTime(req.body.proId, req.body.createTime);
             res.status(200).json({
                 success: true
             })
@@ -82,9 +129,11 @@ app.post('/saveApi', function (req, res) {
     });
 });
 
-app.post('/deleteApi', function (req, res) {
+app.post('/deleteApi.json', function (req, res) {
     api.deleteById(req.body.id, function (status) {
         if (status.code === 200) {
+            // todo
+            pro.updateLastUpdateTime(req.body.proId, req.body.lastUpdateTime);
             res.status(200).json({
                 success: true
             })
@@ -96,17 +145,20 @@ app.post('/deleteApi', function (req, res) {
     });
 });
 
-app.post('/updateApi', function (req, res) {
+app.post('/updateApi.json', function (req, res) {
     let id = req.body.id;
     let param = {
-        url: req.body.url,
+        url: `/${req.body.proCode}${req.body.url}`,
         param: req.body.param,
         method: req.body.method,
         json: req.body.json,
         paramTable: req.body.paramTable,
-        jsonTable: req.body.jsonTable
+        jsonTable: req.body.jsonTable,
+        description: req.body.description,
+        refModuleId: req.body.moduleId
     };
     api.update(id, param, function (status) {
+        pro.updateLastUpdateTime(req.body.proId, req.body.lastUpdateTime);
         if (status.code === 200) {
             res.status(200).json({
                 success: true
@@ -120,7 +172,7 @@ app.post('/updateApi', function (req, res) {
     });
 });
 
-app.get('/getAllApi', function (req, res) {
+app.get('/getAllApi.json', function (req, res) {
     api.selectAll(function (status, result) {
         if (status.code === 200) {
             res.status(200).json({
@@ -136,9 +188,25 @@ app.get('/getAllApi', function (req, res) {
     })
 });
 
-app.post('/queryByParam', function (req, res) {
-    //todo: 如果有第一个项目选项一起选 如果只有一个则通过自己选
-    api.queryByParams(req.body.url, function (status, result) {
+
+app.get('/getAllApiById.json', function (req, res) {
+    api.getAllById(req.query.proId, function (status, result) {
+        if (status.code === 200) {
+            res.status(200).json({
+                success: true,
+                result
+            })
+        } else if (status.code === 500) {
+            res.status(200).json({
+                success: false,
+                msg: status.msg
+            })
+        }
+    })
+});
+
+app.post('/queryByParam.json', function (req, res) {
+    api.queryByParams(req.body.url, req.body.proCode, function (status, result) {
         if (status.code === 200) {
             res.status(200).json({
                 success: true,
@@ -153,16 +221,31 @@ app.post('/queryByParam', function (req, res) {
     });
 });
 
-/* 项目操作 */
+app.post('/importAPIs.json', function (req, res) {
+    api.importAPIs(req.body.proId, req.body.apiArr, function (status, result) {
+        if (status) {
+            api.batchAdd(result, req.body.proCode, 'pro', req.body.moduleId, function(status){
+                res.status(200).json({
+                    success: status
+                })
+            })
+        } else {
+            res.status(200).json({
+                success: false
+            })
+        }
+    });
+});
 
-app.post('/savePro', function (req, res) {
-    let pro = {
-        projectCode: req.body.projectCode,
-        projectName: req.body.projectName,
+/* 模块操作 */
+
+app.post('/saveModule.json', function (req, res) {
+    let moduleObj = {
+        moduleName: req.body.moduleName,
         description: req.body.description,
-        createTime: req.body.createTime
+        refProId: req.body.proId
     };
-    pro.add(pro, function (status) {
+    mod.add(moduleObj, function (status) {
         if (status.code === 200) {
             res.status(200).json({
                 success: true
@@ -176,7 +259,94 @@ app.post('/savePro', function (req, res) {
     });
 });
 
-app.post('/deletePro', function (req, res) {
+app.post('/deleteModule.json', function (req, res) {
+    // todo: 把删除的变量存放，
+    mod.deleteById(req.body.id, function (status, module) {
+        if (status.code === 200) {
+            api.getAllByModuleId(req.body.id, function(result){
+                if(result){
+                    api.batchAdd(result, req.body.rootId, 'module', 'placeholder', function(status){
+                        res.status(200).json({
+                            success: status
+                        })
+                    })
+                }else{
+                    res.status(200).json({
+                        success: false
+                    })
+                }
+            });
+        } else if (status.code === 500) {
+            res.status(200).json({
+                success: false,
+                msg: '模块删除失败'
+            })
+        }
+    });
+});
+
+app.get('/getAllModule.json', function (req, res) {
+    mod.selectAll(function (status, result) {
+        if (status.code === 200) {
+            res.status(200).json({
+                success: true,
+                result
+            })
+        } else if (status.code === 500) {
+            res.status(200).json({
+                success: false,
+                msg: status.msg
+            })
+        }
+    })
+});
+
+app.get('/getAllModuleById.json', function (req, res) {
+    mod.getAllById(req.query.proId, function (status, result) {
+        if (status.code === 200) {
+            res.status(200).json({
+                success: true,
+                result
+            })
+        } else if (status.code === 500) {
+            res.status(200).json({
+                success: false,
+                msg: status.msg
+            })
+        }
+    })
+});
+
+
+/* 项目操作 */
+
+app.post('/savePro.json', function (req, res) {
+    let proIns = {
+        projectCode: req.body.projectCode,
+        projectName: req.body.projectName,
+        description: req.body.description,
+        createTime: req.body.createTime,
+        lastUpdateTime: req.body.createTime,
+    };
+    if(req.body.projectCode === 'template'){
+        proIns['tag'] = true;
+    }
+    pro.add(proIns, function (status, result) {
+        if (status.code === 200) {
+            res.status(200).json({
+                success: true,
+                id: result._id
+            })
+        } else if (status.code === 500) {
+            res.status(200).json({
+                success: false,
+                msg: status.msg
+            })
+        }
+    });
+});
+
+app.post('/deletePro.json', function (req, res) {
     pro.deleteById(req.body.id, function (status) {
         if (status.code === 200) {
             res.status(200).json({
@@ -190,20 +360,43 @@ app.post('/deletePro', function (req, res) {
     });
 });
 
-app.post('/updatePro', function (req, res) {
-    let id = req.body.id;
-    let param = {
-        url: req.body.url,
-        param: req.body.param,
-        method: req.body.method,
-        json: req.body.json,
-        paramTable: req.body.paramTable,
-        jsonTable: req.body.jsonTable
-    };
-    api.update(id, param, function (status) {
+app.post('/updatePro.json', function (req, res) {
+    // let id = req.body.id;
+    // let param = {
+    //     url: req.body.url,
+    //     param: req.body.param,
+    //     method: req.body.method,
+    //     json: req.body.json,
+    //     paramTable: req.body.paramTable,
+    //     jsonTable: req.body.jsonTable
+    // };
+    // api.update(id, param, function (status) {
+    //     if (status.code === 200) {
+    //         res.status(200).json({
+    //             success: true
+    //         })
+    //     } else if (status.code === 500) {
+    //         res.status(200).json({
+    //             success: false,
+    //             msg: status.msg
+    //         })
+    //     }
+    // });
+});
+
+app.get('/getAllPro.json', function (req, res) {
+    pro.selectAll(function (status, result) {
         if (status.code === 200) {
+            result.map((item, index)=>{
+                item.key = item._id;
+                if(item.tag){
+                    let removeItem = result.splice(index, 1);
+                    result.unshift(removeItem[0]);
+                }
+            });
             res.status(200).json({
-                success: true
+                success: true,
+                result
             })
         } else if (status.code === 500) {
             res.status(200).json({
@@ -211,11 +404,12 @@ app.post('/updatePro', function (req, res) {
                 msg: status.msg
             })
         }
-    });
+    })
 });
 
-app.get('/getAllPro', function (req, res) {
-    pro.selectAll(function (status, result) {
+
+app.get('/getProById.json', function (req, res) {
+    pro.selectProById(req.query.id, function (status, result) {
         if (status.code === 200) {
             res.status(200).json({
                 success: true,
@@ -228,6 +422,34 @@ app.get('/getAllPro', function (req, res) {
             })
         }
     })
+});
+
+app.post('/queryByCodeOrName.json', function (req, res) {
+    const callback = function (status, result) {
+        if (status.code === 200) {
+            result.map((item, index)=>{
+                item.key = item._id;
+                if(item.tag){
+                    let removeItem = result.splice(index, 1);
+                    result.unshift(removeItem[0]);
+                }
+            });
+            res.status(200).json({
+                success: true,
+                result
+            })
+        } else if (status.code === 500) {
+            res.status(200).json({
+                success: false,
+                msg: status.msg
+            })
+        }
+    };
+    if(req.body.searchType === 'projectName'){
+        pro.queryByName(req.body.input, callback);
+    }else{
+        pro.queryByCode(req.body.input, callback);
+    }
 });
 
 /* 处理外部访问 暴露存储接口 */
@@ -271,6 +493,7 @@ app.post('*', function (req, res) {
 
 app.get('*', function (req, res) {
     if (req.originalUrl === '/antd.min.css.map' || req.originalUrl === '/favicon.ico') {
+        res.status(404).send('Server.js > 404 - Page Not Found');
         return;
     }
     // decode解决中文乱码问题
@@ -296,6 +519,16 @@ app.get('*', function (req, res) {
             })
         }
     });
+});
+
+app.get('*', function(req, res) {
+    res.status(404).send('Server.js > 404 - Page Not Found');
+});
+
+app.use((err, req, res, next) => {
+    console.error("Error on request %s %s", req.method, req.url);
+    console.error(err.stack);
+    res.status(500).send("Server error");
 });
 
 app.listen(3000, function () {
