@@ -2,8 +2,10 @@
  * Created by therfaint- on 30/10/2017.
  */
 import React from 'react';
+import Input from 'antd/lib/input';
 import JsonDemo from './jsonDemo';
 import Tooltip from 'antd/lib/tooltip';
+import Icon from 'antd/lib/icon';
 
 class InterfaceIns extends React.Component{
 
@@ -93,11 +95,19 @@ class InterfaceIns extends React.Component{
                             </div>
                         </div>
                     ) : (
-                        <div id={`${this.props.id}`} style={{marginBottom: 20}}>
+                        <div id={`${this.props.id}`} style={{marginBottom: 9}}>
                             {/*接口描述*/}
                             <div className="interface-ins-item" style={{fontSize: 18}}>
                                 <strong>{index + ' '}</strong>
-                                <strong>{interfaceIns.description}</strong>
+                                <strong>{interfaceIns.moduleName}</strong>
+                                <div style={{paddingLeft: 18, marginTop: 9}}>
+                                    {
+                                        interfaceIns.description ?
+                                            <Input value={interfaceIns.description} style={{ color:'rgba(0,0,0,.65)', cursor: 'default',border: 'none',fontSize: 16, backgroundColor: '#fff', resize:'none'}} autosize={{minRows:1}} type="textarea" disabled/>
+                                            :
+                                            <div style={{paddingLeft: 7}}><Icon type="frown-o"/> 写文档的人很懒没有写描述哦 </div>
+                                    }
+                                </div>
                             </div>
                         </div>
                     )

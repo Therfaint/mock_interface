@@ -22,6 +22,8 @@ moment.locale('zh-cn');
 const CheckboxGroup = Checkbox.Group;
 const RadioGroup = Radio.Group;
 
+const dateFormat = 'YYYY-MM-DD HH:mm:ss';
+
 class VoteArea extends React.Component {
 
     constructor(props){
@@ -37,23 +39,26 @@ class VoteArea extends React.Component {
     };
 
     submit = () => {
-        $.ajax({
-            url: '/saveVote.json',
-            method: 'POST',
-            data: {
-                select: this.state.selected,
-                experience: this.index
-            },
-            dataType: 'JSON',
-            success: data => {
-                window.scrollTo(0,0);
-                if(data.success){
-                    Message.success(data.msg);
-                }else{
-                    Message.error(data.msg);
+        if(this.state.selected.length || this.index){
+            $.ajax({
+                url: '/saveVote.json',
+                method: 'POST',
+                data: {
+                    select: this.state.selected,
+                    experience: this.index,
+                    voteTime: moment().format(dateFormat)
+                },
+                dataType: 'JSON',
+                success: data => {
+                    window.scrollTo(0,0);
+                    if(data.success){
+                        Message.success(data.msg);
+                    }else{
+                        Message.error(data.msg);
+                    }
                 }
-            }
-        })
+            })
+        }
     };
 
     voteSatisfy = (e, index) => {
@@ -80,25 +85,28 @@ class VoteArea extends React.Component {
                         <h2>您期待下次功能迭代时能优先实现以下的哪几个功能？（建议给出您认为最重要的三条）</h2>
                         <CheckboxGroup value={this.state.selected} onChange={this.onCheckBoxChange}>
                             <div className="vote-item">
-                                <Checkbox value="history" style={{fontSize:13}}>历史接口文档记录回滚</Checkbox>
+                                <Checkbox value="history" style={{fontSize:13}}>接口修改历史记录并支持回滚到任意版本</Checkbox>
                             </div>
                             <div className="vote-item">
-                                <Checkbox value="document" style={{fontSize:13}}>说明文档&使用文档的完善</Checkbox>
+                                <Checkbox value="document" style={{fontSize:13}}>添加说明文档&使用文档</Checkbox>
                             </div>
                             <div className="vote-item">
-                                <Checkbox value="auth" style={{fontSize:13}}>进行用户权限限制</Checkbox>
+                                <Checkbox value="auth" style={{fontSize:13}}>进行用户权限控制，仅能进入拥有权限的项目</Checkbox>
                             </div>
                             <div className="vote-item">
-                                <Checkbox value="login" style={{fontSize:13}}>接入并打通域账号</Checkbox>
+                                <Checkbox value="login" style={{fontSize:13}}>支持用户登录，接入并打通域账号</Checkbox>
                             </div>
                             <div className="vote-item">
-                                <Checkbox value="backend" style={{fontSize:13}}>后端接口测试工具</Checkbox>
+                                <Checkbox value="backend" style={{fontSize:13}}>一键测试后端接口完整性</Checkbox>
                             </div>
                             <div className="vote-item">
-                                <Checkbox value="api" style={{fontSize:13}}>接口管理工具提供更多的mock函数&类型</Checkbox>
+                                <Checkbox value="api" style={{fontSize:13}}>更多的mock函数&类型</Checkbox>
                             </div>
                             <div className="vote-item">
                                 <Checkbox value="style" style={{fontSize:13}}>页面样式&版式优化</Checkbox>
+                            </div>
+                            <div className="vote-item">
+                                <Checkbox value="detail" style={{fontSize:13}}>更多细节完善，如项目名修改，模块名称/描述修改等</Checkbox>
                             </div>
                         </CheckboxGroup>
                     </div>

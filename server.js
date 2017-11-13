@@ -5,27 +5,31 @@ let express = require('express');
 let router = express.Router();
 let app = express();
 let bodyParser = require('body-parser');
+let cookieParser = require('cookie-parser');
 let apiHandler = require('./app/util/api_db_op');
 let moduleHandler = require('./app/util/module_db_op');
 let proHandler = require('./app/util/project_db_op');
+let voteHandler = require('./app/util/vote_db_op');
 // let opHistoryHandler = require('./app/util/operationLog_db_op');
 
 app.use(bodyParser.json({limit: '50mb'}));
+app.use(cookieParser());
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
 let api = new apiHandler();
 let mod = new moduleHandler();
 let pro = new proHandler();
+let vote = new voteHandler();
 // let his = new opHistoryHandler();
 
 const webpack = require('webpack');
 
-// const webpackHotMiddleWare = require('webpack-hot-middleware');
-// const webpackDevMiddleWare = require('webpack-dev-middleware');
-// const config = require('./webpack.config');
-// const compiler = webpack(config);
-// app.use(webpackDevMiddleWare(compiler, {noInfo: true}));
-// app.use(webpackHotMiddleWare(compiler));
+const webpackHotMiddleWare = require('webpack-hot-middleware');
+const webpackDevMiddleWare = require('webpack-dev-middleware');
+const config = require('./webpack.config');
+const compiler = webpack(config);
+app.use(webpackDevMiddleWare(compiler, {noInfo: true}));
+app.use(webpackHotMiddleWare(compiler));
 
 app.use(express.static('public'));
 
@@ -90,17 +94,97 @@ app.get('/wiki/pageId=*', function (req, res) {
     });
 });
 
+/* 历史记录操作 */
+
+// app.get('/getHisById.json', function (req, res) {
+//     vote.selectAll(function (status, result) {
+//         if (status.code === 200) {
+//             res.status(200).json({
+//                 success: true,
+//                 result
+//             })
+//         } else if (status.code === 500) {
+//             res.status(200).json({
+//                 success: false,
+//                 msg: status.msg
+//             })
+//         }
+//     })
+// });
+//
+// app.post('/saveHis.json', function (req, res) {
+//     let hisObj = {
+//         // ip: ,
+//         select: req.body.select,
+//         experience: req.body.experience,
+//         voteTime: req.body.voteTime,
+//     };
+//     vote.add(voteObj, function (status) {
+//         if (status.code === 200) {
+//             res.status(200).json({
+//                 success: true,
+//                 msg: '感谢您提出的宝贵建议'
+//             })
+//         } else if (status.code === 500) {
+//             res.status(200).json({
+//                 success: false,
+//                 msg: status.msg
+//             })
+//         }
+//     });
+// });
+
+/* 投票操作 */
+
+app.get('/getAllVote.json', function (req, res) {
+    vote.selectAll(function (status, result) {
+        if (status.code === 200) {
+            res.status(200).json({
+                success: true,
+                result
+            })
+        } else if (status.code === 500) {
+            res.status(200).json({
+                success: false,
+                msg: status.msg
+            })
+        }
+    })
+});
+
 app.post('/saveVote.json', function (req, res) {
+    if (req.cookies.isVoted) {
         res.status(200).json({
-            success: true,
-            msg: '感谢您提出的宝贵建议'
+            success: false,
+            msg: '感谢您的建议和评价但只有一次机会哦'
         })
+    } else {
+        let voteObj = {
+            select: req.body.select,
+            experience: req.body.experience,
+            voteTime: req.body.voteTime,
+        };
+        vote.add(voteObj, function (status) {
+            res.cookie('isVoted', true, {maxAge: 60 * 60 * 60 * 1000});
+            if (status.code === 200) {
+                res.status(200).json({
+                    success: true,
+                    msg: '感谢您提出的宝贵建议'
+                })
+            } else if (status.code === 500) {
+                res.cookie('isVoted', false, {maxAge: 60 * 60 * 60 * 1000});
+                res.status(200).json({
+                    success: false,
+                    msg: status.msg
+                })
+            }
+        });
+    }
 });
 
 /* 接口操作 */
 
 app.post('/saveApi.json', function (req, res) {
-    console.log(req.body.paramTable)
     let apiObj = {
         // proCode: req.body.proCode,
         url: `/${req.body.proCode}${req.body.url}`,

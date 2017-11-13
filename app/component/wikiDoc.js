@@ -57,6 +57,7 @@ class WikiDoc extends React.Component {
 
             editPanelVisible: false,
             moduleManageVisible: false,
+            sendVisible: false,
 
             pageId: undefined,
 
@@ -322,6 +323,14 @@ class WikiDoc extends React.Component {
         this.setState({moduleManageVisible: true});
     };
 
+    showSendModal = () => {
+        this.setState({sendVisible: true});
+    };
+
+    hideSendModal = () => {
+        this.setState({sendVisible: false});
+    };
+
     // API管理组件
     hideAPIManageModal = () => {
         this.getAPIsById();
@@ -342,11 +351,6 @@ class WikiDoc extends React.Component {
         }
         pageId = href.split('pageId=')[1];
         this.setState({pageId});
-        // Modal.confirm({
-        //     iconType: 'info',
-        //     title: '使用小贴士',
-        //     content: '如果接口数量多建议先创建模块。不建议进行模块的删除。如若必须删除请在删除后刷新页面。'
-        // })
     };
 
     componentDidMount = () => {
@@ -364,10 +368,11 @@ class WikiDoc extends React.Component {
             <section className="wiki-doc">
                 <input type="text" ref="copy_panel" style={{position: 'absolute', top: -100, left: 20, zIndex: -999}}/>
                 <div className={`wiki-operation-header ${this.state.down ? 'down' : ''}`}>
-                    <span style={{fontSize: 24, fontWeight: 'bold'}}>{this.state.pro.projectName}<span style={{fontSize: 16}}>{`(${this.state.pro.description})`}</span></span>
+                    <span style={{fontSize: 24, fontWeight: 'bold', display: 'inline-flex',width: 550, overflow: 'hidden'}}>{this.state.pro.projectName}<span style={{fontSize: 16}}>{`(${this.state.pro.description})`}</span></span>
                     <Button  style={{float: 'right', marginRight: 20, marginTop: 19}}  onClick={(e)=>this.copyUrl(e, 'pro')} type="dashed"><Icon type="share-alt"/>分享</Button>
                     <Button  style={{float: 'right', marginRight: 20, marginTop: 19}}  onClick={this.showAPIManageModal} type="dashed">接口管理</Button>
                     <Button  style={{float: 'right', marginRight: 20, marginTop: 19}}  onClick={this.showModuleManageModal} type="dashed">模块管理</Button>
+                    <Button  style={{float: 'right', marginRight: 20, marginTop: 19}}  onClick={this.showSendModal} type="dashed">接口测试</Button>
                 </div>
                 {/*目录*/}
                 <div className="wiki-doc-content">
@@ -376,7 +381,7 @@ class WikiDoc extends React.Component {
                             this.state.catalogDS.length ? this.state.catalogDS.map((item, index) => {
                                 return (<div key={`navTo-${index}`} className="nav-item-container">
                                     <a className={"nav_interface catalog-" + item.type}
-                                       href={`#interface-${item.key}`}>{`${item.order} ${item.description}`}</a>
+                                       href={`#interface-${item.key}`}>{`${item.order} ${item.moduleName ? item.moduleName : item.description}`}</a>
                                 </div>)
                             }) : this.state.apis.map((item, index) => {
                                 return (<div key={`navTo-${index}`} className="nav-item-container">
@@ -415,8 +420,9 @@ class WikiDoc extends React.Component {
                 </Modal>
                 <Modal
                     title={<span>模块管理
-                        <Tooltip placement="right" overlay={<div><div>1.不推荐进行删除操作</div>
-                            <br/><div>2.删除模块后子接口默认移至系统模块</div>
+                        <Tooltip placement="right" overlay={<div><div>1. 不推荐进行删除操作</div>
+                            <br/><div>2. 即将开放修改接口</div>
+                            <br/><div>3. 模块删除后 子接口默认移至系统模块</div>
                         </div>}>
                             <Icon type="info-circle-o" />
                         </Tooltip>
@@ -428,6 +434,24 @@ class WikiDoc extends React.Component {
                     onCancel={this.hideModuleManageModal}
                 >
                     <ModuleManage pro={this.state.pro}/>
+                </Modal>
+                <Modal
+                    title="接口测试"
+                    visible={this.state.sendVisible}
+                    width={600}
+                    maskClosable={false}
+                    footer={[<Button key="closeApiManage" onClick={this.hideSendModal}>关闭</Button>]}
+                    onCancel={this.hideSendModal}
+                >
+                    <div>
+                        <h3><strong>功能描述:</strong></h3>
+                        <br/>
+                        <div>1. 后台需填写本地开发环境的域名及端口</div><br/>
+                        <div>2. 确定输入参数(为了方便,建议最初文档定义请求参数时进行自定义)</div><br/>
+                        <div>3. 封装请求</div><br/>
+                        <div>4. 批量测试文档内所有已定义接口的有效性以及返回数据结构的正确性</div><br/><br/><br/>
+                        <h2>功能开发中...敬请期待!</h2>
+                    </div>
                 </Modal>
             </section>
         )

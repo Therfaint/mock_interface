@@ -82,7 +82,6 @@ module.exports = class apiDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log(apiObj.url + ' 添加成功!');
                 callback(status.success);
             }
         });
@@ -136,7 +135,6 @@ module.exports = class apiDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log('_id: '+ id +' 删除成功!');
                 callback(status.success, result);
             }
         })
@@ -149,7 +147,6 @@ module.exports = class apiDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log('_id: '+ id +' 更新成功!');
                 callback(status.success, result);
             }
         })
@@ -167,7 +164,6 @@ module.exports = class apiDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log('请求: '+ url +' 返回成功!');
                 callback(status.success, result);
             }
         })
@@ -180,7 +176,6 @@ module.exports = class apiDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log('模糊查询 url: '+ param +' 查询成功!');
                 callback(status.success, result);
             }
         })
@@ -192,7 +187,6 @@ module.exports = class apiDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log('全部数据查询成功!');
                 callback(status.success, result);
             }
         })
@@ -204,7 +198,6 @@ module.exports = class apiDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log('关联接口查询成功!');
                 callback(status.success, result);
             }
         })

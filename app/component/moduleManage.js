@@ -170,10 +170,10 @@ class ModuleManage extends React.Component {
             Message.error('请填写模块名称');
             return;
         }
-        if (!this.state.description && bool) {
-            Message.error('请填写模块描述');
-            return;
-        }
+        // if (!this.state.description && bool) {
+        //     Message.error('请填写模块描述');
+        //     return;
+        // }
         if (bool) {
             this.saveModule();
         }
@@ -234,9 +234,9 @@ class ModuleManage extends React.Component {
                         </div>
                         <div className="clearfix" style={{width: 400, margin: '0 auto 9px'}}>
                             <span style={{lineHeight: '28px', verticalAlign: 'middle'}}>模块描述：</span>
-                            <span><Input style={{width: 300, float: 'right'}} value={this.state.description}
-                                         placeholder="请输入模块描述"
-                                         onChange={(e) => this.handleInputChange(e, 'description')}/></span>
+                            <span><Input value={this.state.description} placeholder="请输入模块描述"
+                                         style={{ width: 300, float: 'right'}}
+                                         autosize={{minRows:3}} type="textarea" onChange={(e) => this.handleInputChange(e, 'description')}/></span>
                         </div>
                     </div>
                 </Modal>

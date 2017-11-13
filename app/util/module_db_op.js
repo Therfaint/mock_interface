@@ -41,7 +41,7 @@ module.exports = class moduleDbUtil{
             },
             description:{
                 type: String,
-                required: true
+                // required: true
             }
         });
         this.Module = this.conn.model('module', this.moduleSchema);
@@ -54,7 +54,6 @@ module.exports = class moduleDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log(result.moduleName + ' 添加成功!');
                 callback(status.success);
             }
         });
@@ -66,7 +65,6 @@ module.exports = class moduleDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log('_id: '+ id +' 删除成功!');
                 callback(status.success, result);
             }
         })
@@ -91,7 +89,6 @@ module.exports = class moduleDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log('全部数据查询成功!');
                 callback(status.success, result);
             }
         })
@@ -103,7 +100,6 @@ module.exports = class moduleDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log('关联接口查询成功!');
                 callback(status.success, result);
             }
         })

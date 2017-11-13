@@ -27,10 +27,6 @@ const options = [{
     value: 'string',
     label: 'String',
     children: [{
-        value: '@string',
-        label: '@String'
-
-    }, {
         value: '@id',
         label: 'Id'
 
@@ -79,9 +75,6 @@ const options = [{
     value: 'number',
     label: 'Number',
     children: [{
-        value: '@number',
-        label: '@Number'
-    }, {
         value: '10',
         label: '10'
     }, {
@@ -128,10 +121,6 @@ const options = [{
     value: 'boolean',
     label: 'Boolean',
     children: [{
-        value: '@boolean',
-        label: '@Boolean'
-
-    }, {
         value: true,
         label: 'True'
 
@@ -147,10 +136,6 @@ const options = [{
     value: 'array',
     label: 'Array',
     children: [{
-        value: '1',
-        label: '@Array'
-
-    }, {
         value: '2',
         label: 'Array(2)'
     },{

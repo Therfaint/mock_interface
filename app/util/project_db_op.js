@@ -71,7 +71,6 @@ module.exports = class proDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log(result._id + ' 添加成功!');
                 callback(status.success, result);
             }
         });
@@ -84,7 +83,6 @@ module.exports = class proDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log('_id: '+ result._id +' 删除成功!');
                 // todo:删除ref中的相应接口
                 callback(status.success, result);
             }
@@ -98,7 +96,6 @@ module.exports = class proDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log('_id: '+ result._id +' 更新成功!');
                 callback(status.success, result);
             }
         })
@@ -108,9 +105,9 @@ module.exports = class proDbUtil{
         let update = {lastUpdateTime : time};
         this.PRO.update({_id: id}, update, function (err,result) {
             if(err){
-                console.log('更新失败:' + err);
+
             }else{
-                console.log('最近更新时间 更新成功!');
+
             }
         })
     }
@@ -121,7 +118,6 @@ module.exports = class proDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log('全部项目查询成功!');
                 callback(status.success, result);
             }
         })
@@ -143,7 +139,6 @@ module.exports = class proDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                console.log('项目查询成功!');
                 callback(status.success, result);
             }
         })

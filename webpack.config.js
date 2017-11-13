@@ -35,23 +35,23 @@ module.exports = {
 
     plugins: [
         new webpack.HotModuleReplacementPlugin(),
-        new webpack.DefinePlugin({
-            'process.env': { NODE_ENV: JSON.stringify(process.env.NODE_ENV) },
-            __CLIENT__: JSON.stringify(true),
-            __SERVER__: JSON.stringify(false),
-        }),
-        // Minimize all JavaScript output of chunks
-        // https://github.com/mishoo/UglifyJS2#compressor-options
-        new webpack.optimize.UglifyJsPlugin({
-            minimize: true,
-            compress: {
-                warnings: false,
-                drop_console: true,
-                screw_ie8: true
-            },
-            output: {
-                comments: false
-            }
-        }),
+        // new webpack.DefinePlugin({
+        //     'process.env': { NODE_ENV: JSON.stringify(process.env.NODE_ENV) },
+        //     __CLIENT__: JSON.stringify(true),
+        //     __SERVER__: JSON.stringify(false),
+        // }),
+        // // Minimize all JavaScript output of chunks
+        // // https://github.com/mishoo/UglifyJS2#compressor-options
+        // new webpack.optimize.UglifyJsPlugin({
+        //     minimize: true,
+        //     compress: {
+        //         warnings: false,
+        //         drop_console: true,
+        //         screw_ie8: true
+        //     },
+        //     output: {
+        //         comments: false
+        //     }
+        // }),
     ]
 }

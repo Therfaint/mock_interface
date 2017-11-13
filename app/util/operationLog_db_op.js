@@ -33,7 +33,7 @@ module.exports = class opLogDbUtil{
         // todo: 如果加入模块可能字段就不一样了
 
         this.opHistorySchema = new mongoose.Schema({
-            refProId:{
+            refApiId:{
                 type: String,
                 index: true
             },
@@ -41,9 +41,12 @@ module.exports = class opLogDbUtil{
                 type: String,
                 required: true
             },
-            paramTable: {
-                type: mongoose.Schema.Types.Mixed
-            }
+            opUser: {
+                type: String
+            },
+            refApis: {
+                type: Array
+            },
         });
         this.His = this.conn.model('op_history', this.opHistorySchema);
     }

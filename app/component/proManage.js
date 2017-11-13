@@ -97,9 +97,9 @@ class ProManage extends Component {
                     this.setState({
                         createProVisible: false
                     });
-                    Message.success('3秒后为您跳转');
                     setTimeout(function () {
-                        window.open(`/wiki/pageId=${id}`)
+                        window.location.href = `/wiki/pageId=${id}`;
+                        // window.open(`/wiki/pageId=${id}`)
                     }, 3000);
                 }else{
                     Message.error(data.msg)
@@ -251,7 +251,8 @@ class ProManage extends Component {
     };
 
     linkToWiki = (item) => {
-        window.open(`/wiki/pageId=${item._id}`);
+        window.location.href = `/wiki/pageId=${item._id}`;
+        // window.open(`/wiki/pageId=${item._id}`);
     };
 
     componentDidMount() {
@@ -291,7 +292,7 @@ class ProManage extends Component {
                                     {
                                         item.tag ? <span className="keep-top-tag">置顶</span> : null
                                     }
-                                    <Tooltip overlay={<div>{item.description}</div>}>
+                                    <Tooltip  placement="right" overlay={<div>{item.description}</div>}>
                                         <a onClick={() => this.linkToWiki(item)} style={{maxWidth: 900}}>{`${item.projectName}(编号: ${item.projectCode})`}</a>
                                     </Tooltip>
                                     <a style={{float: 'right', marginRight: 33}}>{item.lastUpdateTime}</a>

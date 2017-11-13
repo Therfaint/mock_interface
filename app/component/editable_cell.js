@@ -16,7 +16,7 @@ class EditableCell extends React.Component {
     constructor(props){
         super(props);
         this.state = {
-            editable: !this.props.value,
+            // editable: !this.props.value,
             value: this.props.value
         }
     }
@@ -27,7 +27,7 @@ class EditableCell extends React.Component {
     };
 
     check = (bool) => {
-        this.setState({ editable: bool });
+        // this.setState({ editable: bool });
         if (this.props.onChange) {
             this.props.onChange(this.state.value);
         }
@@ -45,37 +45,37 @@ class EditableCell extends React.Component {
     //         return true;
     //     }
     // }
-
+    //
     componentWillReceiveProps(nextProps) {
         this.setState({
-            value: nextProps.value ? nextProps.value : ''
+            value: nextProps.value ? nextProps.value : (nextProps.value === false ? false : '')
         })
     }
 
     render() {
 
-        const { value, editable } = this.state;
+        const { value } = this.state;
 
-        let editStatus = value === 'array' ? false : ( value === '' ? true : editable);
+        // let editStatus = value === 'array' ? false : ( value === '' ? true : editable);
 
         return (
 
             <span className="editable-cell"  style={{width:180, display: 'inline-block', verticalAlign: 'middle'}}>
                 {
-                    editStatus ?
-                        <span className="editable-cell-input-wrapper">
-                            <Input
-                                style={{width:150}}
-                                value={value}
-                                onChange={this.handleChange}
-                                onBlur={()=>this.check(false)}
-                                onPressEnter={()=>this.check(false)}
-                            />
-                        </span>
-                        :
-                        <div className="editable-cell-input-wrapper" style={{marginLeft: 8, paddingTop: 1, width: 180, height: 28, lineHeight: '28px'}} onClick={this.check.bind(this, true)}>
-                            {value === 'array' ? '' : (typeof value === 'boolean' ? String(value) : value)}
-                        </div>
+                    // editStatus ?
+                    <span className="editable-cell-input-wrapper">
+                        <Input
+                            style={{width:150}}
+                            value={value}
+                            onChange={this.handleChange}
+                            onBlur={()=>this.check(false)}
+                            onPressEnter={()=>this.check(false)}
+                        />
+                    </span>
+                        // :
+                        // <div className="editable-cell-input-wrapper" style={{marginLeft: 8, paddingTop: 1, width: 180, height: 28, lineHeight: '28px'}} onClick={this.check.bind(this, true)}>
+                        //     {value === 'array' ? '' : (typeof value === 'boolean' ? String(value) : value)}
+                        // </div>
                 }
             </span>
 

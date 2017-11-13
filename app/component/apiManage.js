@@ -82,7 +82,7 @@ class ApiManage extends React.Component {
             {
                 title: '操作',
                 key: 'operations',
-                width: 200,
+                width: 210,
                 render: (text, record, index) => {
                     if(record.hasOwnProperty('moduleName')){
                         return ''
@@ -91,7 +91,7 @@ class ApiManage extends React.Component {
                             <div>
                                 <Button icon="edit" onClick={() => this.showEditModal(record)}>编辑</Button>
                                 <Button icon="delete" className="op-btn" onClick={() => this.deleteAPI(record)}>删除</Button>
-                                {/*<Button icon="tool" className="op-btn" onClick={()=> this.sendAPI(record)}>测试</Button>*/}
+                                <Button icon="rocket" className="op-btn" onClick={this.showRollBack}>历史</Button>
                             </div>
                         )
                     }
@@ -252,7 +252,7 @@ class ApiManage extends React.Component {
                     data.result.map(item => {
                         let obj = {};
                         if (item._id !== this.props.pro._id) {
-                            obj['label'] = item.description;
+                            obj['label'] = item.moduleName;
                             obj['value'] = item._id;
                             obj['key'] = item._id;
                             obj['proId'] = item.refProId;
@@ -271,7 +271,7 @@ class ApiManage extends React.Component {
     // 格式化treeData
     formatTreeData = () => {
         let {apiMapObj, pros, modules} = {...this.state}, map = {};
-        modules.map((item, index) => {
+        modules.map(item => {
             if (apiMapObj[item['value']]) {
                 item['children'] = apiMapObj[item['value']];
             }
@@ -282,13 +282,16 @@ class ApiManage extends React.Component {
                 map[item['proId']].push(item);
             }
         });
-        pros.map((item, index) => {
+        pros.map(item => {
             if (map[item['value']] && map[item['value']].length) {
                 item['children'] = map[item['value']];
-            } else {
-                pros.splice(index, 1);
             }
         });
+        for(let i=0;i<pros.length;i++){
+            if(!pros[i].hasOwnProperty('children')){
+                pros.splice(i, 1);
+            }
+        }
         this.setState({
             treeData: pros
         })
@@ -803,7 +806,8 @@ class ApiManage extends React.Component {
                 });
                 this.setState({
                     addStatus: true,
-                    json: result
+                    json: result,
+                    addTableJson: JF.updateJsonToTable(data, this.state.addTableJson)
                 });
                 break;
             case 'edit':
@@ -813,7 +817,8 @@ class ApiManage extends React.Component {
                 });
                 this.setState({
                     editStatus: true,
-                    editJson: result
+                    editJson: result,
+                    editTableJson: JF.updateJsonToTable(data, this.state.editTableJson)
                 });
                 break;
             case 'param':
@@ -823,7 +828,8 @@ class ApiManage extends React.Component {
                 });
                 this.setState({
                     paramStatus: true,
-                    param: result
+                    param: result,
+                    addTableParam: JF.updateJsonToTable(data, this.state.addTableParam)
                 });
                 break;
             case 'editParam':
@@ -833,7 +839,8 @@ class ApiManage extends React.Component {
                 });
                 this.setState({
                     editParamStatus: true,
-                    editParam: result
+                    editParam: result,
+                    editTableParam: JF.updateJsonToTable(data, this.state.editTableParam)
                 });
                 break;
             default:
@@ -1091,12 +1098,12 @@ class ApiManage extends React.Component {
                         <span className="header-btn" onClick={this.showEditProject}>
                             <Icon type="setting"/>接口导入
                         </span>
-                        <span className="header-btn" style={{marginLeft: 12}} onClick={this.showRollBack}>
-                            <Icon type="rocket"/>数据回滚
-                        </span>
-                        <span className="header-btn" style={{marginLeft: 12}} onClick={this.showDocument}>
-                            <Icon type="info-circle-o"/>使用说明
-                        </span>
+                        {/*<span className="header-btn" style={{marginLeft: 12}} onClick={this.showRollBack}>*/}
+                            {/*<Icon type="rocket"/>历史记录*/}
+                        {/*</span>*/}
+                        {/*<span className="header-btn" style={{marginLeft: 12}} onClick={this.showDocument}>*/}
+                            {/*<Icon type="info-circle-o"/>使用说明*/}
+                        {/*</span>*/}
                     </div>
                 </div>
                 <Table
