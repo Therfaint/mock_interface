@@ -105,7 +105,7 @@ class InterfaceIns extends React.Component{
                                         interfaceIns.description ?
                                             <Input value={interfaceIns.description} style={{ color:'rgba(0,0,0,.65)', cursor: 'default',border: 'none',fontSize: 16, backgroundColor: '#fff', resize:'none'}} autosize={{minRows:1}} type="textarea" disabled/>
                                             :
-                                            <div style={{paddingLeft: 7}}><Icon type="frown-o"/> 写文档的人很懒没有写描述哦 </div>
+                                            <div style={{paddingLeft: 7}}><Icon type="frown-o"/> 写文档的人很懒没有写模块描述哦 </div>
                                     }
                                 </div>
                             </div>

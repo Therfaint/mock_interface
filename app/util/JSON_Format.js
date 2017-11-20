@@ -62,7 +62,7 @@ class JsonFormatter {
 
             if(data instanceof Array){
                 isArray = true;
-                dsIns['paramName'] = 'array';
+                dsIns['paramName'] = 'THIS_iS_ARRAY_TYPE';
             }else{
                 dsIns['paramName'] = k;
             }

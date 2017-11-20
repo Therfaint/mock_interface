@@ -45,7 +45,13 @@ export default class Data_Parser{
             }
         }else{
             if(item['paramType'][0] !== 'array' && item['paramType'][0] !== 'object'){
-                item['paramType'] = [typeof input];
+                if(input === 'true' || input === 'false'){
+                    item['paramType'] = ['boolean'];
+                }else if(!isNaN(Number(input))){
+                    item['paramType'] = ['number'];
+                }else {
+                    item['paramType'] = [typeof input];
+                }
                 return input;
             }
         }
@@ -132,27 +138,25 @@ export default class Data_Parser{
 
     // 字符串分析解释处理器
     stringParser(value) {
-        if(value === '@string'){
-            return 'Hello World';
-        }
-        return stringOpts[value]();
+        return value ? stringOpts[value]() : '';
     };
 
     // 字符串分析解释处理器
     numberParser(value) {
-        if(value === '@number'){
-            return '666';
-        }
-        if(value.indexOf('-') === -1){
-            return Number(value);
+        if(value){
+            if(value.indexOf('-') === -1){
+                return Number(value);
+            }else{
+                let min, max;
+                min = value.split('-')[0];
+                max = value.split('-')[1];
+                if(value.charAt(0) === '.')
+                    return r.getFloatRandomByRange(min, max);
+                else
+                    return r.getIntRandomByRange(min, max);
+            }
         }else{
-            let min, max;
-            min = value.split('-')[0];
-            max = value.split('-')[1];
-            if(value.charAt(0) === '.')
-                return r.getFloatRandomByRange(min, max);
-            else
-                return r.getIntRandomByRange(min, max);
+            return '';
         }
     };
 
@@ -164,7 +168,7 @@ export default class Data_Parser{
     // 对象分析解释处理器
     objectParser(value) {
         let obj;
-        if(value[0].paramName === 'array' && value[0].paramType[0] === 'object'){
+        if(value[0].paramName === 'THIS_iS_ARRAY_TYPE' && value[0].paramType[0] === 'object'){
             obj = this.dataSourceFill(value, 'array');
         }else{
             obj = this.dataSourceFill(value);

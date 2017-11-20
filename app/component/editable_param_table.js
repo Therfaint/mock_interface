@@ -23,7 +23,24 @@ Notification.config({
     duration: 9,
 });
 
-const options = [{
+const inputOptions = [{
+    value: 'string',
+    label: 'String'
+}, {
+    value: 'number',
+    label: 'Number'
+}, {
+    value: 'boolean',
+    label: 'Boolean'
+}, {
+    value: 'object',
+    label: 'Object'
+}, {
+    value: 'array',
+    label: 'Array'
+}];
+
+const retOptions = [{
     value: 'string',
     label: 'String',
     children: [{
@@ -86,7 +103,7 @@ const options = [{
     }, {
         value: '100',
         label: '100'
-    },{
+    }, {
         value: '200',
         label: '200'
     }, {
@@ -95,28 +112,30 @@ const options = [{
     }, {
         value: '.0-1',
         label: 'FLOAT[0, 1]'
-    }, {
-        value: '0-10',
-        label: 'INT[0, 10]'
-    }, {
-        value: '.0-10',
-        label: 'FLOAT[0, 10]'
-    }, {
-        value: '0-100',
-        label: 'INT[0, 100]'
-    }, {
-        value: '.0-100',
-        label: 'FLOAT[0, 100]'
-    }, {
-        value: '0-1000',
-        label: '[0, 1,000]'
-    }, {
-        value: '0-10000',
-        label: '[0, 10,000]'
-    }, {
-        value: '10000-1000000',
-        label: '[10,000, 1,000,000]'
-    }],
+    },
+        //     {
+        //     value: '0-10',
+        //     label: 'INT[0, 10]'
+        // }, {
+        //     value: '.0-10',
+        //     label: 'FLOAT[0, 10]'
+        // }, {
+        //     value: '0-100',
+        //     label: 'INT[0, 100]'
+        // }, {
+        //     value: '.0-100',
+        //     label: 'FLOAT[0, 100]'
+        // },
+        {
+            value: '0-1000',
+            label: '[0, 1,000]'
+        }, {
+            value: '0-10000',
+            label: '[0, 10,000]'
+        }, {
+            value: '10000-1000000',
+            label: '[10,000, 1,000,000]'
+        }],
 }, {
     value: 'boolean',
     label: 'Boolean',
@@ -138,10 +157,10 @@ const options = [{
     children: [{
         value: '2',
         label: 'Array(2)'
-    },{
+    }, {
         value: '3',
         label: 'Array(3)'
-    },{
+    }, {
         value: '5',
         label: 'Array(5)'
     }, {
@@ -160,75 +179,13 @@ const options = [{
         value: '50',
         label: 'Array(50)'
 
-    }],
-},];
+    }]
+}];
 
 class ParamDefine extends React.Component {
 
     constructor(props) {
         super(props);
-        this.columns = [{
-            title: '字段',
-            key: 'paramName',
-            dataIndex: 'paramName',
-            render: (text, record, index) => (
-                <EditableCell
-                    key="paramName"
-                    value={record.paramName}
-                    onChange={this.onCellChange(record, 'paramName')}
-                />
-            )
-        }, {
-            title: '类型',
-            key: 'paramType',
-            dataIndex: 'paramType',
-            render: (text, record, index) => (
-                // 类型选择下拉
-                <Cascader
-                    placeholder="请选择"
-                    style={{width: 150}}
-                    value={record.paramType}
-                    options={options}
-                    expandTrigger="hover"
-                    displayRender={this.displayRender}
-                    onChange={(value) => this.handleChange(value, record)}
-                />
-            )
-        }, {
-            title: '自定义参数',
-            key: 'usrDefine',
-            dataIndex: 'usrDefine',
-            render: (text, record, index) => (
-                <EditableCell
-                    key="usrDefine"
-                    value={record.usrDefine}
-                    onChange={this.onCellChange(record, 'usrDefine')}
-                />
-            )
-        }, {
-            title: '说明',
-            key: 'illustration',
-            dataIndex: 'illustration',
-            render: (text, record, index) => (
-                <EditableCell
-                    key="illustration"
-                    value={record.illustration}
-                    onChange={this.onCellChange(record, 'illustration')}
-                />
-            )
-        }, {
-            title: '操作',
-            key: 'operation',
-            dataIndex: 'operations',
-            render: (text, record, index) => (
-                <div>
-                    <Icon type="minus-circle-o" style={{fontSize: 18, marginLeft: 3, cursor: 'pointer'}}
-                          onClick={() => this.onDelete(record)}/>
-                    <Icon type="plus-circle-o" style={{fontSize: 18, marginLeft: 5, cursor: 'pointer'}}
-                          onClick={() => this.handleAdd(record)}/>
-                </div>
-            )
-        }];
         this.state = {
             dataSource: [{
                 key: '1',
@@ -238,8 +195,11 @@ class ParamDefine extends React.Component {
                 illustration: '',
                 path: '1'
             }],
-            count: 998
+            count: 998,
+            option: [],
+            usrDefine: ''
         };
+        this.status = false;
     }
 
     dataSourceClean = (dataSource) => {
@@ -279,6 +239,7 @@ class ParamDefine extends React.Component {
                     data = data[curIndex]['children'];
                 }
             }
+            this.props.onOk(this.state.dataSource);
         };
     };
 
@@ -294,6 +255,7 @@ class ParamDefine extends React.Component {
                     dataSource.splice(index, 1);
                 }
             });
+            this.props.onOk(dataSource);
             this.setState({dataSource})
         } else {
             for (let i = 0; i < indexes.length; i++) {
@@ -309,6 +271,7 @@ class ParamDefine extends React.Component {
                             data.splice(index, 1)
                         }
                     });
+                    this.props.onOk(this.dataSourceClean(dataSource));
                     this.setState({dataSource: this.dataSourceClean(dataSource)});
                     return;
                 } else {
@@ -333,10 +296,8 @@ class ParamDefine extends React.Component {
                 data[curIndex]['paramType'] = value;
                 if (value[0] === 'object' || value[0] === 'array') {
                     let paramName;
-                    if (value[0] === 'object') {
-                        paramName = '';
-                    } else if (value[0] === 'array') {
-                        paramName = 'array';
+                    if (value[0] === 'array') {
+                        paramName = 'THIS_iS_ARRAY_TYPE';
                     }
                     if (!data[curIndex].hasOwnProperty('children')) {
                         data[curIndex]['children'] = [];
@@ -360,6 +321,7 @@ class ParamDefine extends React.Component {
                 data = data[curIndex]['children'];
             }
         }
+        this.props.onOk(this.state.dataSource);
     };
 
     handleAdd = (record) => {
@@ -432,62 +394,137 @@ class ParamDefine extends React.Component {
         return count;
     };
 
-    componentWillReceiveProps(nextProps) {
-        if (nextProps.dataSource && nextProps.dataSource.length) {
-            this.setState({
-                dataSource: nextProps.dataSource,
-                count: this.getDeepestCount(nextProps.dataSource) + 1
-            })
+    propsJudge = (nextProps) => {
+        let props = nextProps ? nextProps : this.props;
+        let state = {};
+        if (props.title.indexOf('参数')) {
+            state['usrDefine'] = '自定义返回值';
+            state['option'] = retOptions;
         } else {
-            this.setState({
-                dataSource: [{
-                    key: '1',
-                    paramName: '',
-                    paramType: [],
-                    usrDefine: '',
-                    illustration: '',
-                    path: '1'
-                }]
-            })
+            state['usrDefine'] = '测试参数数据集合';
+            state['option'] = inputOptions;
         }
+        if (props.dataSource && props.dataSource.length) {
+            state['dataSource'] = props.dataSource;
+            state['count'] = this.getDeepestCount(props.dataSource) + 1;
+
+        } else {
+            state['dataSource'] = [{
+                key: '1',
+                paramName: '',
+                paramType: [],
+                usrDefine: '',
+                illustration: '',
+                path: '1'
+            }]
+        }
+        this.setState(state);
+    };
+
+    componentWillReceiveProps(nextProps) {
+        this.propsJudge(nextProps);
+    }
+
+    componentWillMount() {
+        this.propsJudge();
     }
 
     render() {
 
-        const {title, visible, onOk, onCancel} = this.props;
-        const {dataSource} = this.state;
+        let columns = [{
+            title: '字段',
+            key: 'paramName',
+            dataIndex: 'paramName',
+            render: (text, record, index) => (
+                <EditableCell
+                    key="paramName"
+                    value={record.paramName}
+                    onChange={this.onCellChange(record, 'paramName')}
+                />
+            )
+        }, {
+            title: '类型',
+            key: 'paramType',
+            dataIndex: 'paramType',
+            render: (text, record, index) => (
+                // 类型选择下拉
+                <Cascader
+                    placeholder="请选择"
+                    style={{width: 150}}
+                    value={record.paramType}
+                    options={this.state.option}
+                    expandTrigger="hover"
+                    displayRender={this.displayRender}
+                    onChange={(value) => this.handleChange(value, record)}
+                />
+            )
+        }, {
+            title: this.state.usrDefine ? this.state.usrDefine : '',
+            key: 'usrDefine',
+            dataIndex: 'usrDefine',
+            render: (text, record, index) => (
+                <EditableCell
+                    key="usrDefine"
+                    value={record.usrDefine}
+                    onChange={this.onCellChange(record, 'usrDefine')}
+                />
+            )
+        }, {
+            title: '说明',
+            key: 'illustration',
+            dataIndex: 'illustration',
+            render: (text, record, index) => (
+                <EditableCell
+                    key="illustration"
+                    value={record.illustration}
+                    onChange={this.onCellChange(record, 'illustration')}
+                />
+            )
+        }, {
+            title: '操作',
+            key: 'operation',
+            dataIndex: 'operations',
+            render: (text, record, index) => (
+                <div>
+                    <Icon type="minus-circle-o" style={{fontSize: 18, marginLeft: 3, cursor: 'pointer'}}
+                          onClick={() => this.onDelete(record)}/>
+                    <Icon type="plus-circle-o" style={{fontSize: 18, marginLeft: 5, cursor: 'pointer'}}
+                          onClick={() => this.handleAdd(record)}/>
+                </div>
+            )
+        }];
 
-        const footer = [
-            <Button key="back" size="large" onClick={onCancel}>关闭</Button>,
-            <Button key="submit" type="primary" size="large" onClick={() => onOk(this.state.dataSource)}>保存</Button>
-        ];
+        const {title, toString, toTable, format} = this.props;
+        const {dataSource} = this.state;
 
         const paramModel = (
             <Table
                 size="small"
                 dataSource={ dataSource }
-                columns={ this.columns }
+                columns={ columns }
                 pagination={ false }
-                // defaultExpandAllRows={true}
+                defaultExpandAllRows={true}
             />
         );
 
         return (
 
             <section>
-
-                <Modal
-                    visible={visible}
-                    title={title}
-                    onCancel={onCancel}
-                    footer={footer}
-                    maskClosable={false}
-                    width={1000}>
+                {
+                    paramModel
+                }
+                <div style={{marginTop: 9}}>
                     {
-                        paramModel
+                        title.indexOf('参数') === -1 ?
+                            <span>
+                                <Button key="toJson" onClick={format}>格式化</Button>
+                                <Button className="op-btn" key="toString" onClick={toString}>字符串化</Button>
+                                <Button className="op-btn" key="toTable" onClick={toTable}>导入表格</Button>
+                            </span>
+                            :
+                            null
                     }
-                </Modal>
-
+                </div>
             </section>
 
         )

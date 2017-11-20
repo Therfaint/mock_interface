@@ -10,7 +10,7 @@ let apiHandler = require('./app/util/api_db_op');
 let moduleHandler = require('./app/util/module_db_op');
 let proHandler = require('./app/util/project_db_op');
 let voteHandler = require('./app/util/vote_db_op');
-// let opHistoryHandler = require('./app/util/operationLog_db_op');
+let opHistoryHandler = require('./app/util/operationLog_db_op');
 
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(cookieParser());
@@ -20,7 +20,7 @@ let api = new apiHandler();
 let mod = new moduleHandler();
 let pro = new proHandler();
 let vote = new voteHandler();
-// let his = new opHistoryHandler();
+let his = new opHistoryHandler();
 
 const webpack = require('webpack');
 
@@ -96,43 +96,37 @@ app.get('/wiki/pageId=*', function (req, res) {
 
 /* 历史记录操作 */
 
-// app.get('/getHisById.json', function (req, res) {
-//     vote.selectAll(function (status, result) {
-//         if (status.code === 200) {
-//             res.status(200).json({
-//                 success: true,
-//                 result
-//             })
-//         } else if (status.code === 500) {
-//             res.status(200).json({
-//                 success: false,
-//                 msg: status.msg
-//             })
-//         }
-//     })
-// });
-//
-// app.post('/saveHis.json', function (req, res) {
-//     let hisObj = {
-//         // ip: ,
-//         select: req.body.select,
-//         experience: req.body.experience,
-//         voteTime: req.body.voteTime,
-//     };
-//     vote.add(voteObj, function (status) {
-//         if (status.code === 200) {
-//             res.status(200).json({
-//                 success: true,
-//                 msg: '感谢您提出的宝贵建议'
-//             })
-//         } else if (status.code === 500) {
-//             res.status(200).json({
-//                 success: false,
-//                 msg: status.msg
-//             })
-//         }
-//     });
-// });
+app.post('/hisRollback.json', function (req, res) {
+    api.update(req.body.id, req.body.param, function (status, result) {
+        pro.updateLastUpdateTime(req.body.proId, req.body.lastUpdateTime);
+        if (status.code === 200) {
+            res.status(200).json({
+                success: true
+            })
+        } else if (status.code === 500) {
+            res.status(200).json({
+                success: false,
+                msg: status.msg
+            })
+        }
+    })
+});
+
+app.get('/getHisById.json', function (req, res) {
+    his.getAllById(req.query.id, function (status, result) {
+        if (status.code === 200) {
+            res.status(200).json({
+                success: true,
+                result
+            })
+        } else if (status.code === 500) {
+            res.status(200).json({
+                success: false,
+                msg: status.msg
+            })
+        }
+    })
+});
 
 /* 投票操作 */
 
@@ -186,9 +180,8 @@ app.post('/saveVote.json', function (req, res) {
 
 app.post('/saveApi.json', function (req, res) {
     let apiObj = {
-        // proCode: req.body.proCode,
         url: `/${req.body.proCode}${req.body.url}`,
-        param: req.body.param,
+        // param: req.body.param,
         paramTable: req.body.paramTable,
         method: req.body.method.toUpperCase(),
         createTime: req.body.createTime,
@@ -198,8 +191,15 @@ app.post('/saveApi.json', function (req, res) {
         refProId: req.body.proId,
         refModuleId: req.body.moduleId
     };
-    api.add(apiObj, function (status) {
+    api.add(apiObj, function (status, result) {
         if (status.code === 200) {
+            let hisObj = {
+                refApiId: result._id,
+                opTime: req.body.createTime,
+                // opUser: req.body.opUser,
+                api: apiObj
+            };
+            his.add(hisObj);
             pro.updateLastUpdateTime(req.body.proId, req.body.createTime);
             res.status(200).json({
                 success: true
@@ -216,7 +216,6 @@ app.post('/saveApi.json', function (req, res) {
 app.post('/deleteApi.json', function (req, res) {
     api.deleteById(req.body.id, function (status) {
         if (status.code === 200) {
-            // todo
             pro.updateLastUpdateTime(req.body.proId, req.body.lastUpdateTime);
             res.status(200).json({
                 success: true
@@ -233,17 +232,25 @@ app.post('/updateApi.json', function (req, res) {
     let id = req.body.id;
     let param = {
         url: `/${req.body.proCode}${req.body.url}`,
-        param: req.body.param,
+        // param: req.body.param,
         method: req.body.method,
         json: req.body.json,
         paramTable: req.body.paramTable,
         jsonTable: req.body.jsonTable,
         description: req.body.description,
+        refProId: req.body.proId,
         refModuleId: req.body.moduleId
     };
+    let hisObj = {
+        refApiId: id,
+        opTime: req.body.lastUpdateTime,
+        // opUser: req.body.opUser,
+        api: param
+    };
     api.update(id, param, function (status) {
-        pro.updateLastUpdateTime(req.body.proId, req.body.lastUpdateTime);
         if (status.code === 200) {
+            pro.updateLastUpdateTime(req.body.proId, req.body.lastUpdateTime);
+            his.add(hisObj);
             res.status(200).json({
                 success: true
             })
@@ -444,30 +451,6 @@ app.post('/deletePro.json', function (req, res) {
     });
 });
 
-app.post('/updatePro.json', function (req, res) {
-    // let id = req.body.id;
-    // let param = {
-    //     url: req.body.url,
-    //     param: req.body.param,
-    //     method: req.body.method,
-    //     json: req.body.json,
-    //     paramTable: req.body.paramTable,
-    //     jsonTable: req.body.jsonTable
-    // };
-    // api.update(id, param, function (status) {
-    //     if (status.code === 200) {
-    //         res.status(200).json({
-    //             success: true
-    //         })
-    //     } else if (status.code === 500) {
-    //         res.status(200).json({
-    //             success: false,
-    //             msg: status.msg
-    //         })
-    //     }
-    // });
-});
-
 app.get('/getAllPro.json', function (req, res) {
     pro.selectAll(function (status, result) {
         if (status.code === 200) {
@@ -539,19 +522,19 @@ app.post('/queryByCodeOrName.json', function (req, res) {
 /* 处理外部访问 暴露存储接口 */
 
 app.post('*', function (req, res) {
-    let param = {};
-    for (let k in req.body) {
-        if (!isNaN(Number(req.body[k]))) {
-            param[k] = parseInt(req.body[k]);
-        } else if (req.body[k] === 'true') {
-            param[k] = true;
-        } else if (req.body[k] === 'false') {
-            param[k] = false;
-        } else {
-            param[k] = req.body[k];
-        }
-    }
-    api.getAPI(req.originalUrl, 'POST', JSON.stringify(param), function (status, result) {
+    // let param = {};
+    // for (let k in req.body) {
+    //     if (!isNaN(Number(req.body[k]))) {
+    //         param[k] = parseInt(req.body[k]);
+    //     } else if (req.body[k] === 'true') {
+    //         param[k] = true;
+    //     } else if (req.body[k] === 'false') {
+    //         param[k] = false;
+    //     } else {
+    //         param[k] = req.body[k];
+    //     }
+    // }
+    api.getAPI(req.originalUrl, 'POST', function (status, result) {
         if (status.code === 200) {
             let ret;
             switch (result.length) {
@@ -581,7 +564,7 @@ app.get('*', function (req, res) {
         return;
     }
     // decode解决中文乱码问题
-    api.getAPI(decodeURI(req.originalUrl), 'GET', null, function (status, result) {
+    api.getAPI(decodeURI(req.originalUrl), 'GET', function (status, result) {
         if (status.code === 200) {
             let ret;
             switch (result.length) {

@@ -64,15 +64,16 @@ class WikiDoc extends React.Component {
             down: false
         };
         this.apis = [];
+        this.offsetTop = 0;
     }
 
     handleTableDS = (arr, indent, type, arrName) => {
         let retDS = [];
         if (arr && arr.length) {
             arr.map(item => {
-                let obj = {};
+                let obj = {}, isArr;
                 // todo 考虑将array和object的字段进行修饰
-                if(type === 'Array'){
+                if(type){
                     obj['paramName'] = arrName + '[i]';
                 }else{
                     obj['paramName'] = item.paramName;
@@ -81,10 +82,14 @@ class WikiDoc extends React.Component {
                 obj['indent'] = indent;
                 if (item.hasOwnProperty('paramType')) {
                     obj['paramType'] = this.dataTypeFormatter(item.paramType);
+                    if(obj['paramType'] === 'Array'){
+                        isArr = true;
+                        obj['paramType'] = this.dataTypeFormatter(item.children[0].paramType) + '[]';
+                    }
                 }
                 retDS.push(obj);
                 if (item.hasOwnProperty('children')) {
-                    retDS = retDS.concat(this.handleTableDS(item.children, indent+1, obj['paramType'], obj['paramName']));
+                    retDS = retDS.concat(this.handleTableDS(item.children, indent+1, isArr, obj['paramName']));
                 }
             })
         }
@@ -356,11 +361,18 @@ class WikiDoc extends React.Component {
     componentDidMount = () => {
         this.getProById();
         this.getAPIsById();
-        // window.onscroll = (e) => {
-        //     this.setState({
-        //         down: window.scrollY > 66
-        //     })
-        // }
+        window.onscroll = (e) => {
+            if(window.scrollY > this.offsetTop){
+                console.log('down')
+            }else {
+                console.log('up')
+            }
+            this.offsetTop = window.scrollY;
+            // console.log(window.scrollY, this.refs.catalog.offsetTop + this.refs.catalog.clientHeight)
+            // this.setState({
+            //     down: window.scrollY > 66
+            // })
+        }
     };
 
     render() {
@@ -376,7 +388,7 @@ class WikiDoc extends React.Component {
                 </div>
                 {/*目录*/}
                 <div className="wiki-doc-content">
-                    <div className={ this.state.apis.length || this.state.catalogDS.length ? "nav-container" : ''}>
+                    <div className={ this.state.apis.length || this.state.catalogDS.length ? "nav-container" : ''} ref="catalog">
                         {
                             this.state.catalogDS.length ? this.state.catalogDS.map((item, index) => {
                                 return (<div key={`navTo-${index}`} className="nav-item-container">
@@ -405,8 +417,12 @@ class WikiDoc extends React.Component {
                     </div>
                 </div>
                 <div className="jump-tools">
-                    <div className="back-home"><Link to={"/project"}>返回首页  <Icon type="rollback"/></Link></div>
-                    <div className="back-top"><a onClick={this.scrollTop}>回到顶部  <Icon type="up"/></a></div>
+                    <Tooltip overlay={<div>返回首页</div>} placement="left">
+                        <div className="back-home anchor"><Link to={"/project"}><Icon style={{fontSize:38, color: '#fff', padding: '3px 4px'}} type="home"/></Link></div>
+                    </Tooltip>
+                    <Tooltip overlay={<div>返回顶部</div>} placement="left">
+                        <div className="back-top anchor"><a onClick={this.scrollTop}><Icon  style={{fontSize:38, color: '#fff', padding: '3px 4px'}} type="up"/></a></div>
+                    </Tooltip>
                 </div>
                 <Modal
                     title="接口管理"

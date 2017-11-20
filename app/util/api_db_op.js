@@ -30,16 +30,14 @@ module.exports = class apiDbUtil{
             console.log('数据库连接成功...');
         });
 
-        // todo: 是否新增ref或者进行多表查询
-
         this.apiSchema = new mongoose.Schema({
             url: {
                 type: String,
                 required: true
             },
-            param: {
-                type: mongoose.Schema.Types.Mixed
-            },
+            // param: {
+            //     type: mongoose.Schema.Types.Mixed
+            // },
             paramTable: {
                 type: mongoose.Schema.Types.Mixed
             },
@@ -82,7 +80,7 @@ module.exports = class apiDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                callback(status.success);
+                callback(status.success, result);
             }
         });
     }
@@ -105,7 +103,7 @@ module.exports = class apiDbUtil{
                 let urlArr = item.url.split('/');
                 urlArr[1] = proCode;
                 obj['url'] = urlArr.join('/');
-                obj['param'] = item.param;
+                // obj['param'] = item.param;
                 obj['paramTable'] = item.paramTable;
                 obj['method'] = item.method;
                 obj['json'] = item.json;
@@ -152,14 +150,14 @@ module.exports = class apiDbUtil{
         })
     }
 
-    getAPI(url, type, data, callback){
-        let selectParam;
-        if(type === 'POST')
+    getAPI(url, type, callback){
+        // let selectParam;
+        // if(type === 'POST')
             // selectParam = {url: url, method: type, param: data};
-            selectParam = {url: url, method: type};
-        else
-            selectParam = {url: url, method: type};
-        this.API.find(selectParam, {json: 1, param: 1}, function (err,result) {
+            // selectParam = {url: url, method: type};
+        // else
+        let selectParam = {url: url, method: type};
+        this.API.find(selectParam, {json: 1}, function (err,result) {
             if(err){
                 status.fail.msg = err;
                 callback(status.fail);
