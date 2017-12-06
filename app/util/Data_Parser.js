@@ -138,7 +138,7 @@ export default class Data_Parser{
 
     // 字符串分析解释处理器
     stringParser(value) {
-        return value ? stringOpts[value]() : '';
+        return value ? stringOpts[value]() : 'Hello World';
     };
 
     // 字符串分析解释处理器
@@ -156,13 +156,13 @@ export default class Data_Parser{
                     return r.getIntRandomByRange(min, max);
             }
         }else{
-            return '';
+            return '666';
         }
     };
 
     // 布尔值分析解释处理器
     booleanParser(value) {
-        return value === '@boolean' ? Boolean(r.getInt021()) : value;
+        return value === '@boolean' ? Boolean(r.getInt021()) : (value ? value : 'true');
     };
 
     // 对象分析解释处理器

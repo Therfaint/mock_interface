@@ -401,7 +401,7 @@ class ParamDefine extends React.Component {
             state['usrDefine'] = '自定义返回值';
             state['option'] = retOptions;
         } else {
-            state['usrDefine'] = '测试参数数据集合';
+            state['usrDefine'] = '测试参数数据集合(非必填项)';
             state['option'] = inputOptions;
         }
         if (props.dataSource && props.dataSource.length) {

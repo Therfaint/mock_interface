@@ -2,7 +2,7 @@
  * Created by therfaint- on 01/08/2017.
  */
 let mongoose = require('mongoose');
-let status = require('./DB_Op_Status');
+let status = require('../util/DB_Op_Status');
 
 mongoose.Promise = global.Promise;
 
@@ -46,6 +46,11 @@ module.exports = class apiDbUtil{
                 required: true
             },
             method: {
+                type: String,
+                required: true
+            },
+            // 1. multipart/form-data 2.application/x-www-form-urlencoded 3.application/json
+            contentType: {
                 type: String,
                 required: true
             },
@@ -106,6 +111,7 @@ module.exports = class apiDbUtil{
                 // obj['param'] = item.param;
                 obj['paramTable'] = item.paramTable;
                 obj['method'] = item.method;
+                obj['contentType'] = item.contentType;
                 obj['json'] = item.json;
                 obj['jsonTable'] = item.jsonTable;
                 obj['description'] = item.description;
@@ -151,11 +157,6 @@ module.exports = class apiDbUtil{
     }
 
     getAPI(url, type, callback){
-        // let selectParam;
-        // if(type === 'POST')
-            // selectParam = {url: url, method: type, param: data};
-            // selectParam = {url: url, method: type};
-        // else
         let selectParam = {url: url, method: type};
         this.API.find(selectParam, {json: 1}, function (err,result) {
             if(err){

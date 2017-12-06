@@ -104,7 +104,7 @@ class JsonFormatter {
 
     // 将通过this.toJsonObj格式化后的格式转为Json对象
     toJsonStr(data) {
-        return typeof data === 'string' ? data.replace(/[\n\t\s]/g, '') : data;
+        return typeof data === 'string' ? data.replace(/[\n\t]/g, '') : data;
     }
 
     /*
@@ -226,7 +226,7 @@ class JsonFormatter {
 
     excludeSpecial(s) {
         // 去掉转义字符
-        s = s.replace(/[\b\f\n\r\t\s]/g, '');
+        s = s.replace(/[\b\f\n\r\t]/g, '');
         return s;
     };
 

@@ -48,47 +48,59 @@ class ApiManage extends React.Component {
             key: 'moduleName',
             width: 150,
             dataIndex: 'moduleName'
-        }, {
-            title: '请求路径',
-            key: 'url',
-            dataIndex: 'url',
-            width: 300,
-            render: (text, record, index) => (
-                <span>{record.url ? record.url : ''}</span>
-            )
-        }, {
-            title: '请求类型',
-            key: 'method',
-            width: 80,
-            render: (text, record, index) => (
-                <span>{record.method ? record.method : ''}</span>
-            )
-        }, {
-            title: '创建时间',
-            key: 'createTime',
-            width: 180,
-            render: (text, record, index) => (
-                <span>{record.createTime ? record.createTime : ''}</span>
-            )
-        }, {
-            title: '操作',
-            key: 'operations',
-            width: 210,
-            render: (text, record, index) => {
-                if (record.hasOwnProperty('moduleName')) {
-                    return ''
-                } else {
-                    return (
-                        <div>
-                            <Button icon="edit" onClick={() => this.showEditModal(record)}>编辑</Button>
-                            <Button icon="delete" className="op-btn" onClick={() => this.deleteAPI(record)}>删除</Button>
-                            <Button icon="rocket" className="op-btn"
-                                    onClick={() => this.showRollBack(record)}>历史</Button>
-                        </div>
-                    )
+        },
+            //     {
+            //     title: '请求路径',
+            //     key: 'url',
+            //     dataIndex: 'url',
+            //     width: 300,
+            //     render: (text, record, index) => (
+            //         <span>{record.url ? record.url : ''}</span>
+            //     )
+            // },
+            {
+                title: '接口描述',
+                key: 'url',
+                dataIndex: 'description',
+                width: 300,
+                render: (text, record, index) => (
+                    <span>{record.description && record.hasOwnProperty('method') ? record.description : ''}</span>
+                )
+            },
+            {
+                title: '请求类型',
+                key: 'method',
+                width: 80,
+                render: (text, record, index) => (
+                    <span>{record.method ? record.method : ''}</span>
+                )
+            }, {
+                title: '创建时间',
+                key: 'createTime',
+                width: 180,
+                render: (text, record, index) => (
+                    <span>{record.createTime ? record.createTime : ''}</span>
+                )
+            }, {
+                title: '操作',
+                key: 'operations',
+                width: 210,
+                render: (text, record, index) => {
+                    if (record.hasOwnProperty('moduleName')) {
+                        return ''
+                    } else {
+                        return (
+                            <div>
+                                <Button icon="edit" onClick={() => this.showEditModal(record)}>编辑</Button>
+                                <Button icon="delete" className="op-btn"
+                                        onClick={() => this.deleteAPI(record)}>删除</Button>
+                                <Button icon="rocket" className="op-btn"
+                                        onClick={() => this.showRollBack(record)}>历史</Button>
+                            </div>
+                        )
+                    }
                 }
-            }
-        }];
+            }];
         this.rollbackColumns = [{
             title: '版本信息',
             key: 'version',
@@ -127,19 +139,6 @@ class ApiManage extends React.Component {
             addTableJson: null,
             editTableJson: null,
 
-            addParamVisible: false,
-            editParamVisible: false,
-            addJsonVisible: false,
-            editJsonVisible: false,
-
-            lastEditParam: '',
-            lastAddParam: '',
-
-            addStatus: false,
-            editStatus: false,
-            paramStatus: false,
-            editParamStatus: false,
-
             searchParam: '',
             searchPro: '',
 
@@ -151,22 +150,19 @@ class ApiManage extends React.Component {
 
             url: '',
             method: 'GET',
+            contentType: '1',
             description: '',
             param: null,
             json: null,
+
             editUrl: '',
             editMethod: '',
+            editContentType: '',
             editDescription: '',
             editParam: null,
             editJson: null,
-            paramItemNum: 1,
-            showJsonModalVisible: false,
-            addModalVisible: false,
-            editModalVisible: false,
-            paramModalVisible: false,
-            editParamModalVisible: false,
 
-            documentVisible: false,
+            // documentVisible: false,
             projectEditVisible: false,
             rollBackVisible: false,
 
@@ -181,7 +177,12 @@ class ApiManage extends React.Component {
             pros: [],
             modules: [],
 
-            apiHis: []
+            apiHis: [],
+
+            status: 'add',
+
+            addActive: 'param',
+            editActive: 'editParam'
         };
     }
 
@@ -352,8 +353,9 @@ class ApiManage extends React.Component {
             paramTable: JSON.stringify(this.state.addTableParam),
             jsonTable: JSON.stringify(this.state.addTableJson),
             method: this.state.method,
+            contentType: this.state.contentType,
             createTime: moment().format(dateFormat),
-            json: JF.toJsonStr(this.state.json),
+            json: JF.toJsonStr(JF.toJsonObj(DP.dataSourceFill(this.state.addTableJson), 1, true)),
             description: this.state.description,
             moduleId: this.state.module,
             proId: this.state.pageId,
@@ -419,19 +421,15 @@ class ApiManage extends React.Component {
             paramTable: JSON.stringify(this.state.editTableParam),
             jsonTable: JSON.stringify(this.state.editTableJson),
             id: this.state.api._id,
+            url: this.state.editUrl,
             method: this.state.editMethod,
-            json: JF.toJsonStr(this.state.editJson),
+            contentType: this.state.editContentType,
+            json: JF.toJsonStr(JF.toJsonObj(DP.dataSourceFill(this.state.editTableJson), 1, true)),
             description: this.state.editDescription,
             moduleId: this.state.editModule,
             proId: this.state.pageId,
             lastUpdateTime: moment().format(dateFormat)
         };
-        if (this.state.editMethod === 'GET') {
-            data.url = this.state.editUrl;
-        } else {
-            data.url = this.state.editUrl;
-            data.param = JF.toJsonStr(this.state.editParam);
-        }
         $.ajax({
             url: '/updateApi.json',
             data: data,
@@ -568,9 +566,9 @@ class ApiManage extends React.Component {
     // 显示新增API Modal
     showAddModal = () => {
         this.emptyModal();
+        this.showModal();
         this.setState({
-            addStatus: false,
-            addModalVisible: true
+            status: 'add'
         })
     };
 
@@ -584,25 +582,26 @@ class ApiManage extends React.Component {
             Message.error('请正确填写请求路径,以 / 开头');
             return;
         }
-        if(bool && !this.isInvalidTableDS(this.state.addTableParam, 'param')){
-            Message.error('请完整填写输入参数');
+        if (bool && !this.isInvalidTableDS(this.state.addTableParam, 'param')) {
+            Message.error('请完整填写输入参数表格');
+            this.onTabChange('add', 'param');
             return;
         }
-        if(bool && !this.isInvalidTableDS(this.state.addTableJson, 'json')){
-            Message.error('请完整填写输出参数');
+        if (bool && !this.isInvalidTableDS(this.state.addTableJson, 'json')) {
+            Message.error('请完整填写输出参数表格');
+            this.onTabChange('add', 'json');
             return;
         }
         if (bool) {
             // 校验是否填写完整
             this.saveAPI();
         }
-        this.setState({
-            addModalVisible: false
-        })
+        this.hideModal();
     };
 
     // 显示编辑API Modal
     showEditModal = (record) => {
+        this.showModal();
         let editTableParam, editJson, editTableJson;
         editTableParam = (record.paramTable ? JSON.parse(record.paramTable) : null);
         editJson = (JF.isString(record.json) ? record.json : (JSON.parse(record.json) instanceof Array ? JF.toJsonObj(JSON.parse(record.json), 1, true) : (JSON.parse(record.json) instanceof Object ? JF.toJsonObj(JSON.parse(record.json), 1, false) : null)));
@@ -612,12 +611,12 @@ class ApiManage extends React.Component {
             api: record,
             editUrl: record.url,
             editMethod: record.method,
+            editContentType: record.contentType,
             editTableParam,
             editJson,
             editTableJson,
             editDescription: record.description,
-            editStatus: false,
-            editModalVisible: true
+            status: 'edit'
         })
     };
 
@@ -631,21 +630,21 @@ class ApiManage extends React.Component {
             Message.error('请正确填写请求路径,以 / 开头');
             return;
         }
-        if( bool && !this.isInvalidTableDS(this.state.editTableParam, 'param') ){
-            Message.error('请完整填写输入参数');
+        if (bool && !this.isInvalidTableDS(this.state.editTableParam, 'param')) {
+            Message.error('请完整填写输入参数表格');
+            this.onTabChange('edit', 'editParam');
             return;
         }
-        if( bool && !this.isInvalidTableDS(this.state.editTableJson, 'json') ){
-            Message.error('请完整填写输出参数');
+        if (bool && !this.isInvalidTableDS(this.state.editTableJson, 'json')) {
+            Message.error('请完整填写输出参数表格');
+            this.onTabChange('edit', 'editJson');
             return;
         }
         if (bool) {
             // 校验是否填写完整
             this.updateAPI();
         }
-        this.setState({
-            editModalVisible: false
-        })
+        this.hideModal();
     };
 
     // 清空新增/编辑Modal
@@ -654,6 +653,7 @@ class ApiManage extends React.Component {
             module: this.props.rootId,
             url: '',
             method: 'GET',
+            contentType: '1',
             description: '',
             addTableParam: null,
             json: '',
@@ -661,45 +661,49 @@ class ApiManage extends React.Component {
         })
     };
 
-    setModule = (value) => {
-        this.setState({
-            module: value
-        })
+    setInput = (key, e) => {
+        let state = {};
+        state[key] = e.target.value;
+        this.setState(state);
     };
 
-    // 设置URL
-    setURL = (e) => {
-        this.setState({
-            url: e.target.value
-        })
+    setSelect = (key, val) => {
+        let state = {};
+        state[key] = val;
+        this.setState(state);
     };
 
-    // 设置接口描述
-    setDesc = (e) => {
-        this.setState({
-            description: e.target.value
-        })
-    };
-
-    // 设置请求类型
-    setMethod = (value) => {
-        if (value === 'POST')
-            this.setState({
-                method: value
-            });
-        else
-            this.setState({
-                method: value
-            })
-    };
-
-    // 设置请求参数
-    setParam = (e) => {
-        this.setState({
-            param: e.target.value,
-            addTableParam: JF.updateJsonToTable(e.target.value, this.state.addTableParam)
-        })
-    };
+    // setModule = (value) => {
+    //     this.setState({
+    //         module: value
+    //     })
+    // };
+    //
+    // // 设置URL
+    // setURL = (e) => {
+    //     this.setState({
+    //         url: e.target.value
+    //     })
+    // };
+    //
+    // // 设置接口描述
+    // setDesc = (e) => {
+    //     this.setState({
+    //         description: e.target.value
+    //     })
+    // };
+    //
+    // // 设置请求类型
+    // setMethod = (value) => {
+    //     if (value === 'POST')
+    //         this.setState({
+    //             method: value
+    //         });
+    //     else
+    //         this.setState({
+    //             method: value
+    //         })
+    // };
 
     // 设置JSON返回
     setJSON = (e) => {
@@ -709,51 +713,9 @@ class ApiManage extends React.Component {
         });
     };
 
-    // 编辑URL
-    setEditURL = (e) => {
-        this.setState({
-            editUrl: e.target.value
-        })
-    };
-
-    setEditModule = (value) => {
-        this.setState({
-            editModule: value
-        })
-    };
-
     setTargetModule = (value) => {
         this.setState({
             importTargetModule: value
-        })
-    };
-
-    // 编辑请求类型
-    setEditMethod = (value) => {
-        // let {url, param} = this.get2Post2Get(value, 'edit');
-        if (value === 'POST')
-            this.setState({
-                editMethod: value
-            });
-        else
-            this.setState({
-                editMethod: value
-            })
-    };
-
-    // 编辑URL
-    setEditDesc = (e) => {
-        this.setState({
-            editDescription: e.target.value
-        })
-    };
-
-    // 设置请求参数
-    setEditParam = (e) => {
-        this.setState({
-            editParam: e.target.value,
-            // editParamStatus: false,
-            editTableParam: JF.updateJsonToTable(e.target.value, this.state.editTableParam)
         })
     };
 
@@ -761,7 +723,6 @@ class ApiManage extends React.Component {
     setEditJSON = (e) => {
         this.setState({
             editJson: e.target.value,
-            // editStatus: false,
             editTableJson: JF.updateJsonToTable(e.target.value, this.state.editTableJson)
         });
     };
@@ -772,7 +733,7 @@ class ApiManage extends React.Component {
         if (!data && bool) {
             Message.warn('格式化内容不能为空');
             return;
-        }else if (!data && !bool){
+        } else if (!data && !bool) {
             Message.warn('导入表格输入不能为空');
             return;
         }
@@ -805,7 +766,7 @@ class ApiManage extends React.Component {
                 return;
             } else {
                 result = JF.diffInputType(data);
-                if(!result){
+                if (!result) {
                     Message.error('解析失败 请校验输入格式是否正确');
                     return;
                 }
@@ -833,13 +794,11 @@ class ApiManage extends React.Component {
                 break;
             case 'param':
                 this.setState({
-                    // paramStatus: true,
                     param: result,
                 });
                 break;
             case 'editParam':
                 this.setState({
-                    // editParamStatus: true,
                     editParam: result,
                 });
                 break;
@@ -873,83 +832,10 @@ class ApiManage extends React.Component {
     isFullFill(type) {
         let ts = this.state;
         if (type === 'add') {
-            // if (ts.method === 'GET')
             return (ts.url && ts.method && ts.description && ts.module && ts.addTableJson);
-            // else
-            //     return (ts.url && ts.method && ts.json && ts.description && ts.module);
         } else if (type === 'edit') {
-            // if (ts.editMethod === 'GET')
             return (ts.editUrl && ts.editMethod && ts.editTableJson && ts.editDescription && ts.editModule);
-            // else
-            //     return (ts.editUrl && ts.editMethod && ts.editJson && ts.editDescription && ts.editModule);
         }
-    };
-
-    // // POST请求和GET请求之间转换的参数及URL转换
-    // get2Post2Get = (type, context) => {
-    //     let tsMethod,
-    //         tsUrl,
-    //         tsParam,
-    //         url,
-    //         param = {};
-    //     if (context === 'add') {
-    //         tsMethod = this.state.method;
-    //         tsUrl = this.state.url;
-    //         tsParam = this.state.param;
-    //     } else if (context === 'edit') {
-    //         tsMethod = this.state.editMethod;
-    //         tsUrl = this.state.editUrl;
-    //         tsParam = this.state.editParam;
-    //     }
-    //     if (tsMethod === 'GET' && type === 'POST') {
-    //         if (tsUrl && tsUrl.indexOf('?') !== -1) {
-    //             let urlArr = tsUrl.split('?');
-    //             let paramArr = urlArr[1].split('&');
-    //             url = urlArr[0];
-    //             if (paramArr.length !== 0) {
-    //                 paramArr.map(item => {
-    //                     let paramItem;
-    //                     paramItem = item.split('=');
-    //                     param[paramItem[0]] = paramItem[1];
-    //                 })
-    //             }
-    //             param = JSON.stringify(param);
-    //         } else {
-    //             url = tsUrl;
-    //             param = null;
-    //         }
-    //     } else if (tsMethod === 'POST' && type === 'GET' || type === 'setParamStr') {
-    //         let jsonObj = JSON.parse(tsParam);
-    //         let length = JF.getLength(jsonObj);
-    //         // 已经存在参数
-    //         if (tsUrl.indexOf('?') !== -1) {
-    //             tsUrl = tsUrl.split('?')[0];
-    //         }
-    //         if (length === 0) {
-    //             url = tsUrl;
-    //         } else if (length === 1) {
-    //             for (let k in jsonObj) {
-    //                 url = tsUrl + '?' + k + '=' + jsonObj[k];
-    //             }
-    //         } else {
-    //             let count = 0;
-    //             for (let k in jsonObj) {
-    //                 if (count === 0) {
-    //                     url = tsUrl + '?' + k + '=' + jsonObj[k];
-    //                 } else {
-    //                     url += '&' + k + '=' + jsonObj[k];
-    //                 }
-    //                 count++;
-    //             }
-    //         }
-    //     }
-    //     return {url, param}
-    // };
-
-    showEditTable = (type) => {
-        let visible = {};
-        visible[type] = true;
-        this.setState(visible)
     };
 
     // 保存编辑框
@@ -970,17 +856,17 @@ class ApiManage extends React.Component {
         this.setState(visible);
     };
 
-    showDocument = () => {
-        this.setState({
-            documentVisible: true
-        })
-    };
-
-    closeDocument = () => {
-        this.setState({
-            documentVisible: false
-        })
-    };
+    // showDocument = () => {
+    //     this.setState({
+    //         documentVisible: true
+    //     })
+    // };
+    //
+    // closeDocument = () => {
+    //     this.setState({
+    //         documentVisible: false
+    //     })
+    // };
 
     showRollBack = (record) => {
         this.getHisById(record);
@@ -1019,10 +905,6 @@ class ApiManage extends React.Component {
         })
     };
 
-    componentWillReceiveProps = () => {
-        this.getAllAPIByProId();
-    };
-
     componentWillMount = () => {
         this.setState({pageId: this.props.pro._id, module: this.props.rootId});
         this.getAllAPI();
@@ -1032,7 +914,7 @@ class ApiManage extends React.Component {
     };
 
     componentDidMount = () => {
-
+        this.refs.modal.style.display = 'none';
     };
 
     onChange = (value) => {
@@ -1041,14 +923,17 @@ class ApiManage extends React.Component {
 
     isInvalidTableDS = (table, type) => {
         let status = true;
-        if(!table && type === 'param'){
+        if (!table && type === 'param') {
             return status
-        }else{
-            table.map(item=>{
-                if(!item.paramType.length){
+        } else {
+            table.map(item => {
+                if (!item.paramName) {
                     status = false;
                 }
-                if(item.hasOwnProperty('children')){
+                if (!item.paramType.length) {
+                    status = false;
+                }
+                if (item.hasOwnProperty('children')) {
                     this.isInvalidTableDS(item.children);
                 }
             });
@@ -1056,10 +941,51 @@ class ApiManage extends React.Component {
         }
     };
 
+    componentWillReceiveProps = (nextProps, nextState) => {
+        this.getAllAPIByProId();
+        if (!nextProps.editable) {
+            this.refs.modal.style.display = 'none';
+        }
+    };
+
+    showModal = () => {
+        this.refs.modal.style.display = 'flex';
+        this.refs.modal.classList.add('fade_in');
+    };
+
+    hideModal = () => {
+        this.refs.modal.classList.remove('fade_in');
+        this.refs.modal.classList.add('fade_out');
+        setTimeout(() => {
+            this.refs.modal.classList.remove('fade_out');
+            this.refs.modal.style.display = 'none';
+        }, 800)
+    };
+
     clearInput = () => {
         this.setState({searchParam: ''});
         this.getAllAPIByProId();
-    };w
+    };
+
+    onTabChange = (type, key) => {
+        let state = {};
+        if (key) {
+            if (type === 'add') {
+                state['addActive'] = key;
+            } else {
+                state['editActive'] = key;
+            }
+        } else {
+            if (type === 'add') {
+                state['addActive'] = this.state.addActive === 'param' ? 'json' : 'param';
+            } else {
+                state['editActive'] = this.state.editActive === 'editParam' ? 'editJson' : 'editParam';
+            }
+        }
+        this.setState(() => {
+            return state
+        });
+    };
 
     render() {
 
@@ -1077,13 +1003,184 @@ class ApiManage extends React.Component {
 
         return (
             <section id="container">
+                {
+                    this.state.status === 'add' ?
+                        <section ref="modal" className={`api-edit-area`}>
+                            <div className="api-tab-area">
+                                <Tabs style={{marginTop: 9}} activeKey={this.state.addActive}
+                                      onChange={(k) => this.onTabChange('add', k)}>
+                                    <TabPane tab="输入参数" key="param">
+                                        <ParamTable key="addParam" title="参数配置表" dataSource={this.state.addTableParam}
+                                                    onOk={(value) => this.onOk(value, '', 'addTableParam')}/>
+                                    </TabPane>
+                                    <TabPane tab="输出参数" key="json">
+                                        <ParamTable key="addJson" title="Json配置表" dataSource={this.state.addTableJson}
+                                                    onOk={(value) => this.onOk(value, 'json', 'addTableJson')}
+                                                    toString={() => this.stringifyJSON('add', this.state.json)}
+                                                    format={() => this.formatAndCheckJSON('add', this.state.json, true)}
+                                                    toTable={() => this.formatAndCheckJSON('add', this.state.json, false)}
+                                        />
+                                        <Input value={this.state.json} style={{marginTop: 9}}
+                                               placeholder="通过上面的表格进行文档编辑/通过文本输入JSON格式数据后导入表格"
+                                               autosize={{minRows: 5, maxRows: 15}} type="textarea"
+                                               onChange={(e) => this.setJSON(e)}/>
+                                    </TabPane>
+                                </Tabs>
+                            </div>
+                            <div className="wrapper">
+                                <div className="api-form-area">
+                                    <div className="api-title">创建接口</div>
+                                    <div className="api-input-area">
+                                        <div className="form-item">
+                                            <div>接口模块</div>
+                                            <div>
+                                                <Select style={{width: '100%'}} value={this.state.module}
+                                                        onChange={(val) => this.setSelect('module', val)}>
+                                                    {
+                                                        this.props.module.map(item => {
+                                                            return (<Option key={item._id}>{item.moduleName}</Option>)
+                                                        })
+                                                    }
+                                                </Select>
+                                            </div>
+                                        </div>
+                                        <div className="form-item">
+                                            <div>请求类型</div>
+                                            <div>
+                                                <Select style={{width: '100%'}} value={this.state.method}
+                                                        onChange={(val) => this.setSelect('method', val)}>
+                                                    <Option value="GET">GET</Option>
+                                                    <Option value="POST">POST</Option>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                        <div className="form-item">
+                                            <div>Content-Type</div>
+                                            <div>
+                                                <Select style={{width: '100%'}} value={this.state.contentType}
+                                                        onChange={(val) => this.setSelect('contentType', val)}>
+                                                    <Option value="1">multipart/form-data</Option>
+                                                    <Option value="2">application/x-www-form-urlencoded</Option>
+                                                    <Option value="3">application/json</Option>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                        <div className="form-item">
+                                            <div>请求URL</div>
+                                            <Input addonBefore={`/${this.props.pro.projectCode}`}
+                                                   placeholder={"请输入请求路径"}
+                                                   value={this.state.url} onChange={(e) => this.setInput('url', e)}/>
+                                        </div>
+                                        <div className="form-item">
+                                            <div>接口描述</div>
+                                            <Input placeholder={"请输入接口描述"} value={this.state.description}
+                                                   onChange={(e) => this.setInput('description', e)}/>
+                                        </div>
+                                        <div className="form-item">
+                                            <Button style={{width: '100%'}} type="primary"
+                                                    onClick={() => this.closeAddModal(true)}>创建</Button>
+                                        </div>
+                                    </div>
+                                    <div className="api-switch">
+                                        <span onClick={() => this.onTabChange('add')}>切换</span>
+                                        <span onClick={() => this.closeAddModal(false)}>关闭</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        :
+                        <section ref="modal" className={`api-edit-area`}>
+                            <div className="api-tab-area">
+                                <Tabs style={{marginTop: 20}} activeKey={this.state.editActive}
+                                      onChange={(k) => this.onTabChange('edit', k)}>
+                                    <TabPane tab="输入参数" key="editParam">
+                                        <ParamTable key="editParam" title="参数配置表" dataSource={this.state.editTableParam}
+                                                    onOk={(value) => this.onOk(value, '', 'editTableParam')}/>
+                                    </TabPane>
+                                    <TabPane tab="输出参数" key="editJson">
+                                        <ParamTable key="editJson" title="Json配置表" dataSource={this.state.editTableJson}
+                                                    onOk={(value) => this.onOk(value, 'editJson', 'editTableJson')}
+                                                    toString={() => this.stringifyJSON('edit', this.state.editJson)}
+                                                    format={() => this.formatAndCheckJSON('edit', this.state.editJson, true)}
+                                                    toTable={() => this.formatAndCheckJSON('edit', this.state.editJson, false)}
+                                        />
+                                        <Input value={this.state.editJson} style={{marginTop: 9}}
+                                               autosize={{minRows: 5, maxRows: 15}}
+                                               type="textarea" onChange={(e) => this.setEditJSON(e)}/>
+                                    </TabPane>
+                                </Tabs>
+                            </div>
+                            <div className="wrapper">
+                                <div className="api-form-area">
+                                    <div className="api-title">更新接口</div>
+                                    <div className="api-input-area">
+                                        <div className="form-item">
+                                            <div>接口模块</div>
+                                            <div>
+                                                <Select style={{width: '100%'}} value={this.state.editModule}
+                                                        onChange={(val) => this.setSelect('editModule', val)}>
+                                                    {
+                                                        this.props.module.map(item => {
+                                                            return (<Option key={item._id}>{item.moduleName}</Option>)
+                                                        })
+                                                    }
+                                                </Select>
+                                            </div>
+                                        </div>
+                                        <div className="form-item">
+                                            <div>请求类型</div>
+                                            <div>
+                                                <Select style={{width: '100%'}} value={this.state.editMethod}
+                                                        onChange={(val) => this.setSelect('editMethod', val)}>
+                                                    <Option value="GET">GET</Option>
+                                                    <Option value="POST">POST</Option>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                        <div className="form-item">
+                                            <div>Content-Type</div>
+                                            <div>
+                                                <Select style={{width: '100%'}} value={this.state.editContentType}
+                                                        onChange={(val) => this.setSelect('editContentType', val)}>
+                                                    <Option value="1">multipart/form-data</Option>
+                                                    <Option value="2">application/x-www-form-urlencoded</Option>
+                                                    <Option value="3">application/json</Option>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                        <div className="form-item">
+                                            <div>请求URL</div>
+                                            <Input addonBefore={`/${this.props.pro.projectCode}`} placeholder="请输入请求路径"
+                                                   value={this.state.editUrl}
+                                                   onChange={(e) => this.setInput('editUrl', e)}/>
+                                        </div>
+                                        <div className="form-item">
+                                            <div>接口描述</div>
+                                            <Input placeholder={"请输入接口描述"} value={this.state.editDescription}
+                                                   onChange={(e) => this.setInput('editDescription', e)}/>
+                                        </div>
+                                        <div className="form-item">
+                                            <Button style={{width: '100%'}} type="primary"
+                                                    onClick={() => this.closeEditModal(true)}>更新</Button>
+                                        </div>
+                                    </div>
+                                    <div className="api-switch">
+                                        <span onClick={() => this.onTabChange('edit')}>切换</span>
+                                        <span onClick={() => this.closeEditModal(false)}>关闭</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                }
                 <div className="title">
                     <span style={{fontSize: 20, fontWeight: 'bold'}}>接口配置</span>
                     <Icon style={{fontSize: 18, marginLeft: 9, cursor: 'pointer'}} type="plus-circle-o"
                           onClick={() => this.showAddModal()}/>
                     <div style={{position: 'absolute', top: 3, left: 166}}>
-                        <Input placeholder="请输入请求路径" style={{width: 250, marginLeft: 9}} value={this.state.searchParam}
-                               onChange={this.getAPIByParam}  suffix={ this.state.searchParam ? <Icon type="close-circle" className="clear-input" onClick={this.clearInput}/> : null}/>
+                        <Input placeholder="请输入请求路径" style={{width: 250, marginLeft: 9}}
+                               value={this.state.searchParam}
+                               onChange={this.getAPIByParam} suffix={ this.state.searchParam ?
+                            <Icon type="close-circle" className="clear-input" onClick={this.clearInput}/> : null}/>
                     </div>
                     <div className="header-btns">
                         <span className="header-btn" onClick={this.showEditProject}>
@@ -1105,115 +1202,6 @@ class ApiManage extends React.Component {
                     scroll={{y: 600}}
                 />
                 <Modal
-                    visible={this.state.addModalVisible}
-                    title="创建接口"
-                    width={1280}
-                    maskClosable={false}
-                    onOk={() => this.closeAddModal(true)}
-                    onCancel={() => this.closeAddModal(false)}>
-                    <div>
-                        <div className="api-input-area">
-                            <div style={{marginBottom: 15}}>
-                                <span>接口模块</span>
-                                <Select style={{width: 250, marginLeft: 21}} value={this.state.module}
-                                        onChange={this.setModule}>
-                                    {
-                                        this.props.module.map(item => {
-                                            return (<Option key={item._id}>{item.moduleName}</Option>)
-                                        })
-                                    }
-                                </Select>
-                            </div>
-                            <div style={{marginBottom: 15}}>
-                                <span>请求类型</span>
-                                <Select style={{width: 250, marginLeft: 21}} value={this.state.method}
-                                        onChange={this.setMethod}>
-                                    <Option value="GET">GET</Option>
-                                    <Option value="POST">POST</Option>
-                                </Select>
-                            </div>
-                            <Input addonBefore={`/${this.props.pro.projectCode}`}
-                                   placeholder={"请输入请求路径"}
-                                   value={this.state.url} onChange={(e) => this.setURL(e)}/>
-                            <Input placeholder={"请输入接口描述"} className="url-input" value={this.state.description}
-                                   onChange={(e) => this.setDesc(e)}/>
-                        </div>
-                        <div className="api-tab-area">
-                            <Tabs style={{marginTop: 9}} defaultActiveKey="param">
-                                <TabPane tab="编辑输入参数" key="param">
-                                    <ParamTable key="addParam" title="参数配置表" dataSource={this.state.addTableParam}
-                                                onOk={(value) => this.onOk(value, '', 'addTableParam')}/>
-                                </TabPane>
-                                <TabPane tab="编辑输出参数" key="json">
-                                    <ParamTable key="addJson" title="Json配置表" dataSource={this.state.addTableJson}
-                                                onOk={(value) => this.onOk(value, 'json', 'addTableJson')}
-                                                toString={() => this.stringifyJSON('add', this.state.json)}
-                                                format={() => this.formatAndCheckJSON('add', this.state.json, true)}
-                                                toTable={() => this.formatAndCheckJSON('add', this.state.json, false)}
-                                    />
-                                    <Input value={this.state.json} style={{marginTop: 9}} placeholder="可通过上面的表格进行文档编辑或通过该文本输入，再导入表格"
-                                           autosize={{minRows: 5, maxRows: 15}} type="textarea"
-                                           onChange={(e) => this.setJSON(e)}/>
-                                </TabPane>
-                            </Tabs>
-                        </div>
-                    </div>
-                </Modal>
-                <Modal
-                    visible={this.state.editModalVisible}
-                    title={this.state.api ? this.state.api.url : null}
-                    maskClosable={false}
-                    width={1280}
-                    onOk={() => this.closeEditModal(true)}
-                    onCancel={() => this.closeEditModal(false)}>
-                    <div>
-                        <div className="api-input-area">
-                            <div style={{marginBottom: 15}}>
-                                <span>接口模块</span>
-                                <Select style={{width: 250, marginLeft: 21}} value={this.state.editModule}
-                                        onChange={this.setEditModule}>
-                                    {
-                                        this.props.module.map(item => {
-                                            return (<Option key={item._id}>{item.moduleName}</Option>)
-                                        })
-                                    }
-                                </Select>
-                            </div>
-                            <div style={{marginBottom: 15}}>
-                                <span>请求类型</span>
-                                <Select style={{width: 250, marginLeft: 21}} value={this.state.editMethod}
-                                        onChange={this.setEditMethod}>
-                                    <Option value="GET">GET</Option>
-                                    <Option value="POST">POST</Option>
-                                </Select>
-                            </div>
-                            <Input addonBefore={`/${this.props.pro.projectCode}`} placeholder="请输入请求路径"
-                                   value={this.state.editUrl} onChange={(e) => this.setEditURL(e)}/>
-                            <Input placeholder={"请输入接口描述"} className="url-input" value={this.state.editDescription}
-                                   onChange={(e) => this.setEditDesc(e)}/>
-                        </div>
-                        <div className="api-tab-area">
-                            <Tabs style={{marginTop: 20}} defaultActiveKey="editParam">
-                                <TabPane tab="修改输入参数" key="editParam">
-                                    <ParamTable key="editParam" title="参数配置表" dataSource={this.state.editTableParam}
-                                                onOk={(value) => this.onOk(value, '', 'editTableParam')}/>
-                                </TabPane>
-                                <TabPane tab="修改输出参数" key="editJson">
-                                    <ParamTable key="editJson" title="Json配置表" dataSource={this.state.editTableJson}
-                                                onOk={(value) => this.onOk(value, 'editJson', 'editTableJson')}
-                                                toString={() => this.stringifyJSON('edit', this.state.editJson)}
-                                                format={() => this.formatAndCheckJSON('edit', this.state.editJson, true)}
-                                                toTable={() => this.formatAndCheckJSON('edit', this.state.editJson, false)}
-                                    />
-                                    <Input value={this.state.editJson} style={{marginTop: 9}}
-                                           autosize={{minRows: 5, maxRows: 15}}
-                                           type="textarea" onChange={(e) => this.setEditJSON(e)}/>
-                                </TabPane>
-                            </Tabs>
-                        </div>
-                    </div>
-                </Modal>
-                <Modal
                     visible={this.state.rollBackVisible}
                     title="历史记录"
                     maskClosable={false}
@@ -1228,16 +1216,16 @@ class ApiManage extends React.Component {
                         />
                     </div>
                 </Modal>
-                <Modal
-                    visible={this.state.documentVisible}
-                    title="使用说明"
-                    maskClosable={false}
-                    onOk={this.closeDocument}
-                    onCancel={this.closeDocument}>
-                    <div>
-                        敬请期待
-                    </div>
-                </Modal>
+                {/*<Modal*/}
+                {/*visible={this.state.documentVisible}*/}
+                {/*title="使用说明"*/}
+                {/*maskClosable={false}*/}
+                {/*onOk={this.closeDocument}*/}
+                {/*onCancel={this.closeDocument}>*/}
+                {/*<div>*/}
+                {/*敬请期待*/}
+                {/*</div>*/}
+                {/*</Modal>*/}
                 <Modal
                     visible={this.state.projectEditVisible}
                     title="接口导入"

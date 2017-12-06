@@ -3,7 +3,7 @@
  */
 
 let mongoose = require('mongoose');
-let status = require('./DB_Op_Status');
+let status = require('../util/DB_Op_Status');
 let apiDbUtil = require('./api_db_op');
 
 mongoose.Promise = global.Promise;
@@ -83,7 +83,6 @@ module.exports = class proDbUtil{
                 status.fail.msg = err;
                 callback(status.fail);
             }else{
-                // todo:删除ref中的相应接口
                 callback(status.success, result);
             }
         })

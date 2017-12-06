@@ -2,7 +2,8 @@
  * Created by therfaint- on 30/10/2017.
  */
 import React from 'react';
-import { Link} from "react-router-dom";
+import fetch from '../util/fetch';
+import {Link} from "react-router-dom";
 import Message from 'antd/lib/message';
 import Input from 'antd/lib/input';
 import Icon from 'antd/lib/icon';
@@ -14,7 +15,10 @@ import Modal from 'antd/lib/modal';
 import Notification from 'antd/lib/notification';
 import ApiManage from './apiManage';
 import ModuleManage from './moduleManage';
-import Catalog from './catalog';
+import Loading from './loading';
+import OrderList from './orderList';
+import Tag from './tag';
+import DragPanel from './dragableTabPanel';
 import moment from 'moment';
 import 'moment/locale/zh-cn';
 moment.locale('zh-cn');
@@ -40,7 +44,6 @@ Notification.config({
 });
 
 const JF = new JsonFormatter();
-const DP = new dataParser();
 
 class WikiDoc extends React.Component {
 
@@ -61,11 +64,20 @@ class WikiDoc extends React.Component {
 
             pageId: undefined,
 
-            down: false
+            scroll: false,
+
+            url: '',
+            cookie: '',
+
+            paramArr: [],
+
+            bgWidth: 0,
+            bgHeight: 0,
+            isSend: false
         };
-        this.apis = [];
+        this.pingStatus = false;
         this.offsetTop = 0;
-    }
+    };
 
     handleTableDS = (arr, indent, type, arrName) => {
         let retDS = [];
@@ -73,23 +85,24 @@ class WikiDoc extends React.Component {
             arr.map(item => {
                 let obj = {}, isArr;
                 // todo 考虑将array和object的字段进行修饰
-                if(type){
+                if (type) {
                     obj['paramName'] = arrName + '[i]';
-                }else{
+                } else {
                     obj['paramName'] = item.paramName;
                 }
                 obj['illustration'] = item.illustration;
+                obj['usrDefine'] = item.usrDefine;
                 obj['indent'] = indent;
                 if (item.hasOwnProperty('paramType')) {
                     obj['paramType'] = this.dataTypeFormatter(item.paramType);
-                    if(obj['paramType'] === 'Array'){
+                    if (obj['paramType'] === 'Array') {
                         isArr = true;
                         obj['paramType'] = this.dataTypeFormatter(item.children[0].paramType) + '[]';
                     }
                 }
                 retDS.push(obj);
                 if (item.hasOwnProperty('children')) {
-                    retDS = retDS.concat(this.handleTableDS(item.children, indent+1, isArr, obj['paramName']));
+                    retDS = retDS.concat(this.handleTableDS(item.children, indent + 1, isArr, obj['paramName']));
                 }
             })
         }
@@ -121,9 +134,9 @@ class WikiDoc extends React.Component {
         if (treeDS && treeDS.length) {
             treeDS.map(item => {
                 let obj = {...item};
-                if(parentIndex){
+                if (parentIndex) {
                     obj['order'] = parentIndex + '.' + count;
-                }else{
+                } else {
                     obj['order'] = String(count);
                 }
                 obj['type'] = item.type;
@@ -131,7 +144,7 @@ class WikiDoc extends React.Component {
                 if (item.hasOwnProperty('children') || parentIndex) {
                     retDS.push(obj);
                     retDS = retDS.concat(this.formatCatalogData(item['children'], count));
-                    count ++;
+                    count++;
                 }
             })
         }
@@ -139,28 +152,29 @@ class WikiDoc extends React.Component {
     };
 
     formatWikiDocData = (data, isArray) => {
-        if(isArray){
+        if (isArray) {
             let res = [...data],
                 jsonTable,
                 paramTable;
-            res.map(item => {
+            res.map((item, index) => {
                 let arr = item.url.split('/');
-                arr.splice(0,2);
+                arr.splice(0, 2);
                 item.url = '/' + arr.join('/');
                 item.key = item._id;
+                item.index = index;
                 try {
                     jsonTable = JSON.parse(item.jsonTable);
                 } catch (e) {
                     jsonTable = [];
                 } finally {
-                    item.jsonTable = this.handleTableDS(jsonTable,1);
+                    item.jsonTable = this.handleTableDS(jsonTable, 1);
                 }
                 try {
                     paramTable = JSON.parse(item.paramTable);
                 } catch (e) {
                     paramTable = [];
                 } finally {
-                    item.paramTable = this.handleTableDS(paramTable,1);
+                    item.paramTable = this.handleTableDS(paramTable, 1);
                 }
                 try {
                     item.json = JF.isString(item.json) ? item.json : (JSON.parse(item.json) instanceof Array ? JF.toJsonObj(JSON.parse(item.json), 1, true) : (JSON.parse(item.json) instanceof Object ? JF.toJsonObj(JSON.parse(item.json), 1, false) : null));
@@ -169,12 +183,12 @@ class WikiDoc extends React.Component {
                 }
             });
             return res;
-        }else{
+        } else {
             let res = {...data},
                 jsonTable,
                 paramTable;
             let arr = res.url.split('/');
-            arr.splice(0,2);
+            arr.splice(0, 2);
             res.url = '/' + arr.join('/');
             res.key = res._id;
             try {
@@ -182,14 +196,14 @@ class WikiDoc extends React.Component {
             } catch (e) {
                 jsonTable = [];
             } finally {
-                res.jsonTable = this.handleTableDS(jsonTable,1);
+                res.jsonTable = this.handleTableDS(jsonTable, 1);
             }
             try {
                 paramTable = JSON.parse(res.paramTable);
             } catch (e) {
                 paramTable = [];
             } finally {
-                res.paramTable = this.handleTableDS(paramTable,1);
+                res.paramTable = this.handleTableDS(paramTable, 1);
             }
             try {
                 res.json = JF.isString(res.json) ? res.json : (JSON.parse(res.json) instanceof Array ? JF.toJsonObj(JSON.parse(res.json), 1, true) : (JSON.parse(res.json) instanceof Object ? JF.toJsonObj(JSON.parse(res.json), 1, false) : null));
@@ -210,7 +224,7 @@ class WikiDoc extends React.Component {
             success: data => {
                 if (data.success) {
                     let mapObj = {};
-                    if(data.result && data.result.length){
+                    if (data.result && data.result.length) {
                         data.result.map(item => {
                             item['type'] = 2;
                             if (!mapObj.hasOwnProperty(item.refModuleId)) {
@@ -244,6 +258,67 @@ class WikiDoc extends React.Component {
         })
     };
 
+    send = async (host, param, cookie, jsonTable) => {
+        let length = param.length;
+        for (let i = 0; i < length; i++) {
+            let startTime = new Date();
+            let endTime = '';
+            try {
+                await fetch('/apiTest', {
+                    param: param[i],
+                    host,
+                    cookie
+                }).then(res => {
+                    endTime = new Date();
+                    console.log(jsonTable[i]);
+                    if(res.code === 200){
+                        param[i]['result'] = res.result;
+                        param[i]['duration'] = endTime.getTime() - startTime.getTime();
+                    }else if(res.code === 500){
+                        Message('请求超时 请重试');
+                        throw new Error();
+                    }
+                }).catch(e => {
+                    console.log(e);
+                });
+            } catch (e) {
+                console.log(e)
+            }
+            if (i === length - 1) {
+                this.setState({
+                    isSend: false
+                });
+                this.refs.mask.style.display = 'none';
+            }
+        }
+    };
+
+    // 测试单一接口
+    isConnectable = (host, param, cookie) => {
+        let p = [...param];
+        let jsonTable = [];
+        p.map(item=>{
+            jsonTable.push(item.jsonTable);
+            delete item.jsonTable;
+        });
+        fetch('/ping', {
+            host,
+            param: p[0],
+            cookie
+        }).then(res=>{
+            if(res.code === 1){
+                this.send(host, p, cookie, jsonTable);
+            }else{
+                Message.error('该URL无法ping通 请检查URL和cookie是否正确');
+                this.setState({
+                    isSend: false
+                });
+                this.refs.mask.style.display = 'none';
+            }
+        });
+
+    };
+
     // 获取全部模块
     getAllModuleByProId = (mapObj, apis) => {
         $.ajax({
@@ -254,22 +329,22 @@ class WikiDoc extends React.Component {
                 if (data.success) {
                     let rootId = '', count = 0, isRoot = false;
                     let catalogDS = [...data.result], retDS = [];
-                    data.result.map(item=>{
+                    data.result.map(item => {
                         item.key = item._id;
-                        if(item.moduleName === '系统目录'){
+                        if (item.moduleName === '系统目录') {
                             rootId = item._id;
                         }
                     });
-                    for(let k in mapObj){
-                        if(mapObj[k] && mapObj[k].length){
-                            count ++;
-                            if(k === rootId){
+                    for (let k in mapObj) {
+                        if (mapObj[k] && mapObj[k].length) {
+                            count++;
+                            if (k === rootId) {
                                 isRoot = true;
                             }
                         }
                     }
-                    if(count !== 1 || !isRoot){
-                        if(data.result.length > 1){
+                    if (count !== 1 || !isRoot) {
+                        if (data.result.length > 1) {
                             catalogDS.map(item => {
                                 item['type'] = 1;
                                 if (mapObj[item['_id']]) {
@@ -281,7 +356,7 @@ class WikiDoc extends React.Component {
                                 catalogDS: retDS
                             });
                         }
-                    }else{
+                    } else {
                         this.setState({
                             apis: this.formatWikiDocData(apis, true)
                         })
@@ -299,18 +374,18 @@ class WikiDoc extends React.Component {
 
     // 回到顶部
     scrollTop = () => {
-        window.scrollTo(0,0);
+        window.scrollTo(0, 0);
     };
 
     // 复制链接
     copyUrl = (e, type) => {
-        if(type === 'api'){
+        if (type === 'api') {
             this.refs['copy_panel'].value = `${window.location.protocol}//${window.location.host}/${this.state.pro.projectCode}${e.target.innerText}`;
-        }else{
+        } else {
             let url = window.location.href, hash = window.location.hash, href;
-            if(hash){
+            if (hash) {
                 href = url.split(hash)[0];
-            }else{
+            } else {
                 href = url;
             }
             this.refs['copy_panel'].value = href;
@@ -349,9 +424,9 @@ class WikiDoc extends React.Component {
 
     componentWillMount = () => {
         let url = window.location.href, hash = window.location.hash, href, pageId;
-        if(hash){
+        if (hash) {
             href = url.split(hash)[0];
-        }else{
+        } else {
             href = url;
         }
         pageId = href.split('pageId=')[1];
@@ -359,36 +434,196 @@ class WikiDoc extends React.Component {
     };
 
     componentDidMount = () => {
+        this.refs.modal.style.display = 'none';
+        // this.testSingleApi();
         this.getProById();
         this.getAPIsById();
         window.onscroll = (e) => {
-            if(window.scrollY > this.offsetTop){
-                console.log('down')
-            }else {
-                console.log('up')
+            let state = {};
+            if (window.scrollY > this.offsetTop) {
+
+            } else {
+
             }
-            this.offsetTop = window.scrollY;
+            if (window.scrollY > this.refs.catalog.offsetTop + this.refs.catalog.clientHeight) {
+                state['scroll'] = true;
+            } else {
+                state['scroll'] = false;
+            }
+            this.setState(state);
             // console.log(window.scrollY, this.refs.catalog.offsetTop + this.refs.catalog.clientHeight)
             // this.setState({
             //     down: window.scrollY > 66
             // })
+        };
+    };
+
+    componentWillUnmount = () => {
+        window.onscroll = null;
+    };
+
+    startTestApi = () => {
+        let mask = this.refs.mask;
+        let host = this.state.url;
+        let param = this.state.paramArr;
+        let cookie = this.state.cookie;
+        if (this.state.isSend) {
+            return;
         }
+        if (this.state.cookie && this.state.url) {
+            mask.style.display = 'block';
+            this.setState({
+                isSend: true
+            });
+            this.isConnectable(host,param,cookie);
+        } else {
+            Message.info('请输入请求URL及cookie信息')
+        }
+    };
+
+    showModal = () => {
+        this.formatParams();
+        document.body.style.overflow = 'hidden';
+        this.refs.modal.style.display = 'flex';
+        this.refs.modal.classList.add('fade_in');
+    };
+
+    hideModal = () => {
+        document.body.style.overflow = 'scroll';
+        this.refs.modal.classList.remove('fade_in');
+        this.refs.modal.classList.add('fade_out');
+        setTimeout(() => {
+            this.refs.modal.classList.remove('fade_out');
+            this.refs.modal.style.display = 'none';
+        }, 800)
+    };
+
+    setInput = (key, e) => {
+        let state = {};
+        state[key] = e.target.value;
+        this.setState(state);
+    };
+
+    formatParams = () => {
+        let apis = this.state.apis;
+        let paramArr = [];
+        apis.map((item, index) => {
+            paramArr.push(this.formatParam(item, index));
+        });
+        console.log(paramArr);
+        this.setState({
+            paramArr
+        })
+    };
+
+    formatParam = (api, index) => {
+        let formatParam = {};
+        let paramObj = api.paramTable;
+        formatParam['url'] = api.url;
+        formatParam['description'] = api.description;
+        formatParam['index'] = index;
+        formatParam['jsonTable'] = api.jsonTable;
+        formatParam['method'] = api.method;
+        formatParam['params'] = {};
+        paramObj.map(p => {
+            if (p.usrDefine.indexOf(',') !== -1) {
+                formatParam['params'][p.paramName] = p.usrDefine.split(',');
+            } else {
+                formatParam['params'][p.paramName] = p.usrDefine;
+            }
+        });
+        return formatParam;
+    };
+
+    showChild = (e) => {
+        let tar = e.currentTarget;
+        if (e.target.classList.contains('dl-up') || e.target.classList.contains('dl-down') || e.target.parentNode.classList.contains('api-test-detail') || e.target.classList.contains('api-test-detail')) {
+            return;
+        }
+        if (tar.lastChild.classList.contains('show')) {
+            tar.lastChild.classList.remove('show')
+        } else {
+            tar.lastChild.classList.add('show')
+        }
+    };
+
+    changeStatus = () => {
+        if(this.state.sort){
+            this.setState({
+                sort: false
+            })
+        }else{
+            this.setState({
+                sort: true
+            })
+        }
+    };
+
+    isValidReturn = (jsonTable, result) => {
+        let data = {
+            pass: 0,
+            fail: 0
+        };
+        // 定义一个状态 默认为true 只要失败置为false
+        // 1.遍历json结构 2.如果有子元素则递归 3.没有的话则直接判断
+        jsonTable.map(item=>{
+            if(item.hasOwnProperty('children')){
+
+            }else{
+                if(result.hasOwnProperty(item.paramName)){
+
+                }
+            }
+        })
+        // 判断状态 失败则fail++ 成功则pass++
+    };
+
+    isValidReturns = (jsonTable, resultArr) => {
+        let passCount = 0;
+        let failCount = 0;
+        let failMsg = '';
+        resultArr.map(res=>{
+            jsonTable.map(json=>{
+                if(res.hasOwnProperty(json.paramName)){
+                    if(json.hasOwnProperty('children')){
+
+                    }
+                }
+            })
+        })
+    };
+
+    reOrder = (value) => {
+        this.setState({
+            paramArr: value
+        })
     };
 
     render() {
         return (
             <section className="wiki-doc">
                 <input type="text" ref="copy_panel" style={{position: 'absolute', top: -100, left: 20, zIndex: -999}}/>
-                <div className={`wiki-operation-header ${this.state.down ? 'down' : ''}`}>
-                    <span style={{fontSize: 24, fontWeight: 'bold', display: 'inline-flex',width: 550, overflow: 'hidden'}}>{this.state.pro.projectName}<span style={{fontSize: 16}}>{`(${this.state.pro.description})`}</span></span>
-                    <Button  style={{float: 'right', marginRight: 20, marginTop: 19}}  onClick={(e)=>this.copyUrl(e, 'pro')} type="dashed"><Icon type="share-alt"/>分享</Button>
-                    <Button  style={{float: 'right', marginRight: 20, marginTop: 19}}  onClick={this.showAPIManageModal} type="dashed">接口管理</Button>
-                    <Button  style={{float: 'right', marginRight: 20, marginTop: 19}}  onClick={this.showModuleManageModal} type="dashed">模块管理</Button>
-                    <Button  style={{float: 'right', marginRight: 20, marginTop: 19}}  onClick={this.showSendModal} type="dashed">接口测试</Button>
+                <div className={`wiki-operation-header`}>
+                    <span style={{
+                        fontSize: 24,
+                        fontWeight: 'bold',
+                        display: 'inline-flex',
+                        width: 550,
+                        overflow: 'hidden'
+                    }}>{this.state.pro.projectName}<span
+                        style={{fontSize: 16}}>{`(${this.state.pro.description})`}</span></span>
+                    {/*<Button  style={{float: 'right', marginRight: 20, marginTop: 19}}  onClick={(e)=>this.copyUrl(e, 'pro')} type="dashed"><Icon type="share-alt"/>分享</Button>*/}
+                    <Button style={{float: 'right', marginRight: 20, marginTop: 19}} onClick={this.showAPIManageModal}
+                            type="dashed">接口管理</Button>
+                    <Button style={{float: 'right', marginRight: 20, marginTop: 19}}
+                            onClick={this.showModuleManageModal} type="dashed">模块管理</Button>
+                    <Button style={{float: 'right', marginRight: 20, marginTop: 19}} onClick={this.showModal}
+                            type="dashed">接口测试</Button>
                 </div>
                 {/*目录*/}
                 <div className="wiki-doc-content">
-                    <div className={ this.state.apis.length || this.state.catalogDS.length ? "nav-container" : ''} ref="catalog">
+                    <div className={ this.state.apis.length || this.state.catalogDS.length ? "nav-container" : ''}
+                         ref="catalog">
                         {
                             this.state.catalogDS.length ? this.state.catalogDS.map((item, index) => {
                                 return (<div key={`navTo-${index}`} className="nav-item-container">
@@ -407,10 +642,13 @@ class WikiDoc extends React.Component {
                     <div className="api-ins-item">
                         {
                             this.state.catalogDS.length ? this.state.catalogDS.map((item, index) => {
-                                return <InterfaceIns copyUrl={(e)=>this.copyUrl(e, 'api')} index={item.order} id={`interface-${item.key}`}
+                                return <InterfaceIns copyUrl={(e) => this.copyUrl(e, 'api')} index={item.order}
+                                                     id={`interface-${item.key}`}
                                                      type={item.type} key={`interface-${index}`} interfaceIns={item}/>
                             }) : this.state.apis.map((item, index) => {
-                                return <InterfaceIns copyUrl={(e)=>this.copyUrl(e, 'api')} index={item.order ? item.order : (index + 1) } id={`interface-${item.key}`}
+                                return <InterfaceIns copyUrl={(e) => this.copyUrl(e, 'api')}
+                                                     index={item.order ? item.order : (index + 1) }
+                                                     id={`interface-${item.key}`}
                                                      type={3} key={`interface-${index}`} interfaceIns={item}/>
                             })
                         }
@@ -418,29 +656,41 @@ class WikiDoc extends React.Component {
                 </div>
                 <div className="jump-tools">
                     <Tooltip overlay={<div>返回首页</div>} placement="left">
-                        <div className="back-home anchor"><Link to={"/project"}><Icon style={{fontSize:38, color: '#fff', padding: '3px 4px'}} type="home"/></Link></div>
+                        <div className="back-home anchor"><Link to={"/project"}><Icon
+                            style={{fontSize: 38, color: '#fff', padding: '3px 4px'}} type="home"/></Link></div>
                     </Tooltip>
-                    <Tooltip overlay={<div>返回顶部</div>} placement="left">
-                        <div className="back-top anchor"><a onClick={this.scrollTop}><Icon  style={{fontSize:38, color: '#fff', padding: '3px 4px'}} type="up"/></a></div>
+                    <Tooltip overlay={<div>文档分享</div>} mouseLeaveDelay={0} placement="left">
+                        <div className="share anchor"><a onClick={(e) => this.copyUrl(e, 'pro')}><Icon
+                            style={{fontSize: 34, color: '#fff', padding: '4px 5px'}} type="share-alt"/></a></div>
+                    </Tooltip>
+                    <Tooltip overlay={<div>返回顶部</div>} mouseLeaveDelay={0} placement="left">
+                        <div className="back-top anchor" style={{display: this.state.scroll ? 'block' : 'none'}}><a
+                            onClick={this.scrollTop}><Icon style={{fontSize: 38, color: '#fff', padding: '3px 4px'}}
+                                                           type="up"/></a></div>
                     </Tooltip>
                 </div>
                 <Modal
                     title="接口管理"
                     visible={this.state.editPanelVisible}
-                    width={1200}
+                    // style={{top: 0}}
+                    width={1280}
                     maskClosable={false}
                     footer={[<Button key="closeApiManage" onClick={this.hideAPIManageModal}>关闭</Button>]}
                     onCancel={this.hideAPIManageModal}
                 >
-                    <ApiManage pro={this.state.pro} module={this.state.module} rootId={this.state.rootId}/>
+                    <ApiManage editable={false} pro={this.state.pro} module={this.state.module}
+                               rootId={this.state.rootId}/>
                 </Modal>
                 <Modal
                     title={<span>模块管理
-                        <Tooltip placement="right" overlay={<div><div>1. 不推荐进行删除操作</div>
-                            <br/><div>2. 即将开放修改接口</div>
-                            <br/><div>3. 模块删除后 子接口默认移至系统模块</div>
+                        <Tooltip placement="right" overlay={<div>
+                            <div>1. 不推荐进行删除操作</div>
+                            <br/>
+                            <div>2. 即将开放修改接口</div>
+                            <br/>
+                            <div>3. 模块删除后 子接口默认移至系统模块</div>
                         </div>}>
-                            <Icon type="info-circle-o" />
+                            <Icon type="info-circle-o"/>
                         </Tooltip>
                     </span>}
                     visible={this.state.moduleManageVisible}
@@ -451,24 +701,107 @@ class WikiDoc extends React.Component {
                 >
                     <ModuleManage pro={this.state.pro}/>
                 </Modal>
-                <Modal
-                    title="接口测试"
-                    visible={this.state.sendVisible}
-                    width={600}
-                    maskClosable={false}
-                    footer={[<Button key="closeApiManage" onClick={this.hideSendModal}>关闭</Button>]}
-                    onCancel={this.hideSendModal}
-                >
-                    <div>
-                        <h3><strong>功能描述:</strong></h3>
-                        <br/>
-                        <div>1. 后台需填写本地开发环境的域名及端口</div><br/>
-                        <div>2. 确定输入参数(为了方便,建议最初文档定义请求参数时进行自定义)</div><br/>
-                        <div>3. 封装请求</div><br/>
-                        <div>4. 批量测试文档内所有已定义接口的有效性以及返回数据结构的正确性</div><br/><br/><br/>
-                        <h2>功能开发中...敬请期待!</h2>
+                {/*<Modal*/}
+                {/*title="接口测试"*/}
+                {/*visible={this.state.sendVisible}*/}
+                {/*width={600}*/}
+                {/*maskClosable={false}*/}
+                {/*footer={[<Button key="closeApiManage" onClick={this.hideSendModal}>关闭</Button>]}*/}
+                {/*onCancel={this.hideSendModal}*/}
+                {/*>*/}
+                <section ref="modal" className="api-test-area">
+                    <div className="api-test-tab-area">
+                        <DragPanel reOrder={this.reOrder} apis={this.state.paramArr} sort={this.state.sort}/>
+                        <div className="mask" ref="mask"></div>
+                        <Loading style={{display: this.state.isSend ? 'block' : 'none'}}/>
+                        {/*<div className="test-api-datalist">*/}
+                            {/*<div className="test-api-header clearfix">*/}
+                                {/*<span>排序</span>*/}
+                                {/*<span>接口URL</span>*/}
+                                {/*<span>通过率</span>*/}
+                                {/*<span>测试结果</span>*/}
+                            {/*</div>*/}
+                            {/*<div className="test-api-list">*/}
+                                {/*<div className="test-api-item clearfix" onClick={this.showChild.bind(this)}>*/}
+                                    {/*<div>*/}
+                                        {/*<span>*/}
+                                            {/*<Icon className="dl-up" type="up-square-o"/>*/}
+                                            {/*<Icon className="dl-down" type="down-square-o"/>*/}
+                                        {/*</span>*/}
+                                        {/*<span>www.baidu.com</span>*/}
+                                        {/*<span>240/250</span>*/}
+                                        {/*<span><Tag type="pass"/></span>*/}
+                                    {/*</div>*/}
+                                    {/*<div className="api-test-detail">*/}
+                                        {/*<div>1</div>*/}
+                                        {/*<div>2</div>*/}
+                                        {/*<div>3</div>*/}
+                                        {/*<div>4</div>*/}
+                                        {/*<div>5</div>*/}
+                                        {/*<div>2</div>*/}
+                                        {/*<div>3</div>*/}
+                                        {/*<div>4</div>*/}
+                                        {/*<div>5</div>*/}
+                                    {/*</div>*/}
+                                {/*</div>*/}
+                            {/*</div>*/}
+                            {/*<div className="test-api-list">*/}
+                                {/*<div className="test-api-item clearfix" onClick={this.showChild.bind(this)}>*/}
+                                    {/*<span>*/}
+                                        {/*<Icon className="dl-up" type="up-square-o"/>*/}
+                                        {/*<Icon className="dl-down" type="down-square-o"/>*/}
+                                    {/*</span>*/}
+                                    {/*<span>www.baidu.com</span>*/}
+                                    {/*<span>240/250</span>*/}
+                                    {/*<span><Tag type="review"/></span>*/}
+                                    {/*<div className="api-test-detail">show this</div>*/}
+                                {/*</div>*/}
+                            {/*</div>*/}
+                            {/*<div className="test-api-list">*/}
+                                {/*<div className="test-api-item clearfix" onClick={this.showChild.bind(this)}>*/}
+                                    {/*<span>*/}
+                                        {/*<Icon className="dl-up" type="up-square-o"/>*/}
+                                        {/*<Icon className="dl-down" type="down-square-o"/>*/}
+                                    {/*</span>*/}
+                                    {/*<span>www.baidu.com</span>*/}
+                                    {/*<span>240/250</span>*/}
+                                    {/*<span><Tag type="fail"/></span>*/}
+                                    {/*<div className="api-test-detail">show this</div>*/}
+                                {/*</div>*/}
+                            {/*</div>*/}
+                        {/*</div>*/}
                     </div>
-                </Modal>
+                    <div className="wrapper">
+                        <div className="api-form-area">
+                            <div className="api-title">接口测试</div>
+                            <div className="api-input-area">
+                                <div className="form-item">
+                                    <div>请求URL</div>
+                                    <div>
+                                        <Input placeholder={"请输入后台域名及端口号"} value={this.state.url}
+                                               onChange={(e) => this.setInput('url', e)}/>
+                                    </div>
+                                </div>
+                                <div className="form-item">
+                                    <div>cookie</div>
+                                    <div>
+                                        <Input value={this.state.cookie} autosize={{minRows: 5, maxRows: 10}}
+                                               type="textarea" onChange={(e) => this.setInput('cookie', e)}/>
+                                    </div>
+                                </div>
+                                <div className="form-item">
+                                    <Button style={{width: '100%'}} type="primary"
+                                            onClick={this.startTestApi}>{this.state.isSend ?
+                                        <Icon style={{fontSize: 16}} type="loading"/> : 'Send!'}</Button>
+                                </div>
+                            </div>
+                            <div className="api-switch">
+                                <span onClick={this.changeStatus}>{this.state.sort ? 'Done' : 'Sort'}</span>
+                                <span onClick={this.hideModal}>Close</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </section>
         )
 

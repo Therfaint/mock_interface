@@ -41,7 +41,7 @@ class ProManage extends Component {
             down: false
         };
         this.deleteIdArr = [];
-    }
+    };
 
     createPro = () => {
         $.ajax({

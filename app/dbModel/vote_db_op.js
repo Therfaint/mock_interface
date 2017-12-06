@@ -5,7 +5,7 @@
  * Created by therfaint- on 01/08/2017.
  */
 let mongoose = require('mongoose');
-let status = require('./DB_Op_Status');
+let status = require('../util/DB_Op_Status');
 
 mongoose.Promise = global.Promise;
 
