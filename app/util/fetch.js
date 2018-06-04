@@ -4,14 +4,7 @@ export default function fetchClient(url, body, head, opt) {
 
     const cfg = {
         credentials: 'include',
-        // headers: {
-        //     // 'Accept': 'application/json',
-        //     'Content-Type': 'application/json',
-        //     // 'Content-Type': 'application/x-www-form-urlencoded'
-        // },
-        mode: 'cors',
-        // redirect: 'follow',
-        // cache: 'default'
+        mode: 'cors'
     };
 
     if (!body) {
@@ -46,13 +39,13 @@ export default function fetchClient(url, body, head, opt) {
                 return res.json()
             }else if (res.status === 500) {
                 return {
-                    msg: 'Server Connect Error!'
+                    msg: 'Server Error!'
                 }
             }
             return { code: 900, errRes: res }
 
         } catch (e) {
-            return { code: 500, errRes: 'server return not json' }
+            return { code: 500, errRes: 'json can not resolve' }
         }
     })
 }

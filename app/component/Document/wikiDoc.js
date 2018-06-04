@@ -1,42 +1,34 @@
 /**
  * Created by therfaint- on 30/10/2017.
  */
+import fetch from '../../util/fetch';
+
 import React from 'react';
-import fetch from '../util/fetch';
 import {Link} from "react-router-dom";
 import Message from 'antd/lib/message';
 import Input from 'antd/lib/input';
 import Icon from 'antd/lib/icon';
 import Tooltip from 'antd/lib/tooltip';
-import Select from 'antd/lib/select';
-import Table from 'antd/lib/table';
 import Button from 'antd/lib/button';
 import Modal from 'antd/lib/modal';
 import Notification from 'antd/lib/notification';
-import ApiManage from './apiManage';
+import ApiManage from '../ApiManage/apiManage';
 import ModuleManage from './moduleManage';
-import Loading from './loading';
-import OrderList from './orderList';
-import Tag from './tag';
-import DragPanel from './dragableTabPanel';
+import Loading from '../ApiTest/loading';
+import DragPanel from '../ApiTest/dragableTabPanel';
+
 import moment from 'moment';
 import 'moment/locale/zh-cn';
 moment.locale('zh-cn');
 
-import JsonFormatter from '../util/JSON_Format';
+import JsonFormatter from '../../util/JSON_Format';
 
 import InterfaceIns from './interfaceIns';
 
-import ParamTable from './editable_param_table';
-
-import dataParser from '../util/Data_Parser';
-
-const dateFormat = 'YYYY-MM-DD HH:mm:ss';
-
-const Option = Select.Option;
+import Nav from './catalog';
 
 Message.config({
-    duration: 2,
+    duration: 5,
 });
 
 Notification.config({
@@ -50,11 +42,11 @@ class WikiDoc extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            pro: {},
-            module: [],
-            apis: [],
+            pro: {}, // 项目对象
+            module: [], // 模块数组
+            apis: [], // 接口数组
 
-            catalogDS: [],
+            catalogDS: [], // 目录数据结构
 
             rootId: '',
 
@@ -62,21 +54,21 @@ class WikiDoc extends React.Component {
             moduleManageVisible: false,
             sendVisible: false,
 
-            pageId: undefined,
+            pageId: undefined, // 当前项目ID
 
             scroll: false,
 
-            url: '',
-            cookie: '',
+            url: '', // 测试URL
+            cookie: '', // 测试cookie
 
-            paramArr: [],
+            paramArr: [], // 测试数据集合
 
             bgWidth: 0,
             bgHeight: 0,
             isSend: false
         };
-        this.pingStatus = false;
         this.offsetTop = 0;
+        this.firstRender = true;
     };
 
     handleTableDS = (arr, indent, type, arrName) => {
@@ -97,7 +89,10 @@ class WikiDoc extends React.Component {
                     obj['paramType'] = this.dataTypeFormatter(item.paramType);
                     if (obj['paramType'] === 'Array') {
                         isArr = true;
-                        obj['paramType'] = this.dataTypeFormatter(item.children[0].paramType) + '[]';
+                        if (item.children.length) {
+
+                        }
+                        obj['paramType'] = this.dataTypeFormatter(item.children.length ? item.children[0].paramType : ['Error']) + '[]';
                     }
                 }
                 retDS.push(obj);
@@ -122,6 +117,8 @@ class WikiDoc extends React.Component {
                 return 'Array';
             case data.indexOf('object') !== -1:
                 return 'Object';
+            case data.indexOf('error') !== -1:
+                return '未定义';
             default:
                 return '错误类型';
         }
@@ -167,6 +164,7 @@ class WikiDoc extends React.Component {
                 } catch (e) {
                     jsonTable = [];
                 } finally {
+                    item.testTable = jsonTable;
                     item.jsonTable = this.handleTableDS(jsonTable, 1);
                 }
                 try {
@@ -212,162 +210,153 @@ class WikiDoc extends React.Component {
             }
             return res;
         }
-
     };
 
     // 根据项目ID获取其下API
     getAPIsById = () => {
-        $.ajax({
-            url: '/getAllApiById.json?proId=' + this.state.pageId,
-            method: 'GET',
-            dataType: 'JSON',
-            success: data => {
-                if (data.success) {
-                    let mapObj = {};
-                    if (data.result && data.result.length) {
-                        data.result.map(item => {
-                            item['type'] = 2;
-                            if (!mapObj.hasOwnProperty(item.refModuleId)) {
-                                mapObj[item.refModuleId] = [];
-                            }
-                            mapObj[item.refModuleId].push(this.formatWikiDocData(item, false));
-                        });
-                    }
-                    this.getAllModuleByProId(mapObj, data.result);
-                } else {
-                    Message.error(data.msg)
+        let url = '/getAllApiById.json?proId=' + this.state.pageId;
+        fetch(url).then(data => {
+            if (data.success) {
+                let res = JSON.parse(JSON.stringify(data));
+                this.setState({
+                    paramArr: res.result
+                });
+                let mapObj = {};
+                if (data.result && data.result.length) {
+                    data.result.map(item => {
+                        item['type'] = 2;
+                        if (!mapObj.hasOwnProperty(item.refModuleId)) {
+                            mapObj[item.refModuleId] = [];
+                        }
+                        mapObj[item.refModuleId].push(this.formatWikiDocData(item, false));
+                    });
                 }
+                this.getAllModuleByProId(mapObj, data.result);
+            } else {
+                Message.error(data.msg)
             }
         })
     };
 
     getProById = () => {
-        $.ajax({
-            url: '/getProById.json?id=' + this.state.pageId,
-            method: 'GET',
-            dataType: 'JSON',
-            success: data => {
-                if (data.success) {
-                    this.setState({
-                        pro: data.result
-                    })
-                } else {
-                    Message.error(data.msg)
-                }
+        let url = '/getProById.json?id=' + this.state.pageId;
+        fetch(url).then(data => {
+            if (data.success) {
+                this.setState({
+                    pro: data.result
+                })
+            } else {
+                Message.error(data.msg)
             }
         })
     };
 
-    send = async (host, param, cookie, jsonTable) => {
-        let length = param.length;
-        for (let i = 0; i < length; i++) {
-            let startTime = new Date();
-            let endTime = '';
-            try {
-                await fetch('/apiTest', {
-                    param: param[i],
-                    host,
-                    cookie
-                }).then(res => {
-                    endTime = new Date();
-                    console.log(jsonTable[i]);
-                    if(res.code === 200){
-                        param[i]['result'] = res.result;
-                        param[i]['duration'] = endTime.getTime() - startTime.getTime();
-                    }else if(res.code === 500){
-                        Message('请求超时 请重试');
-                        throw new Error();
-                    }
-                }).catch(e => {
-                    console.log(e);
-                });
-            } catch (e) {
-                console.log(e)
-            }
-            if (i === length - 1) {
-                this.setState({
-                    isSend: false
-                });
-                this.refs.mask.style.display = 'none';
-            }
-        }
-    };
-
-    // 测试单一接口
-    isConnectable = (host, param, cookie) => {
-        let p = [...param];
-        let jsonTable = [];
-        p.map(item=>{
-            jsonTable.push(item.jsonTable);
-            delete item.jsonTable;
-        });
-        fetch('/ping', {
-            host,
-            param: p[0],
-            cookie
-        }).then(res=>{
-            if(res.code === 1){
-                this.send(host, p, cookie, jsonTable);
-            }else{
-                Message.error('该URL无法ping通 请检查URL和cookie是否正确');
-                this.setState({
-                    isSend: false
-                });
-                this.refs.mask.style.display = 'none';
-            }
-        });
-
-    };
+    // send = async (host, param, cookie, jsonTable) => {
+    //     let length = param.length;
+    //     for (let i = 0; i < length; i++) {
+    //         let startTime = new Date();
+    //         let endTime = '';
+    //         try {
+    //             await fetch('/apiTest', {
+    //                 param: param[i],
+    //                 host,
+    //                 cookie
+    //             }).then(res => {
+    //                 endTime = new Date();
+    //                 this.isValidReturns(jsonTable[i], res, i);
+    //                 if (res.code === 200) {
+    //                     param[i]['result'] = res.result;
+    //                     param[i]['duration'] = endTime.getTime() - startTime.getTime();
+    //                     console.log(param[i])
+    //                 } else if (res.code === 500) {
+    //                     Message('请求超时 请重试');
+    //                     throw new Error();
+    //                 }
+    //             }).catch(e => {
+    //                 console.log(e);
+    //             });
+    //         } catch (e) {
+    //             console.log(e)
+    //         }
+    //         if (i === length - 1) {
+    //             this.setState({
+    //                 isSend: false
+    //             });
+    //             this.refs.mask.style.display = 'none';
+    //         }
+    //     }
+    // };
+    //
+    // // 测试单一接口
+    // isConnectable = (host, param, cookie) => {
+    //     let p = [...param];
+    //     let jsonTable = [];
+    //     p.map(item => {
+    //         jsonTable.push(item.jsonTable);
+    //     });
+    //     fetch('/ping', {
+    //         host,
+    //         param: p[0],
+    //         cookie
+    //     }).then(res => {
+    //         if (res.code === 1) {
+    //             this.send(host, param, cookie, jsonTable);
+    //         } else {
+    //             Message.error('该URL无法ping通 请检查URL和cookie是否正确');
+    //             this.setState({
+    //                 isSend: false
+    //             });
+    //             this.refs.mask.style.display = 'none';
+    //         }
+    //     });
+    //
+    // };
 
     // 获取全部模块
     getAllModuleByProId = (mapObj, apis) => {
-        $.ajax({
-            url: '/getAllModuleById.json?proId=' + this.state.pageId,
-            method: 'GET',
-            dataType: 'JSON',
-            success: data => {
-                if (data.success) {
-                    let rootId = '', count = 0, isRoot = false;
-                    let catalogDS = [...data.result], retDS = [];
-                    data.result.map(item => {
-                        item.key = item._id;
-                        if (item.moduleName === '系统目录') {
-                            rootId = item._id;
-                        }
-                    });
-                    for (let k in mapObj) {
-                        if (mapObj[k] && mapObj[k].length) {
-                            count++;
-                            if (k === rootId) {
-                                isRoot = true;
-                            }
+        let url = '/getAllModuleById.json?proId=' + this.state.pageId;
+        fetch(url).then(data => {
+            if (data.success) {
+                let rootId = '', count = 0, isRoot = false;
+                let catalogDS = [...data.result], retDS = [];
+                data.result.map(item => {
+                    item.key = item._id;
+                    if (item.moduleName === '系统目录') {
+                        rootId = item._id;
+                    }
+                });
+                for (let k in mapObj) {
+                    if (mapObj[k] && mapObj[k].length) {
+                        count++;
+                        if (k === rootId) {
+                            isRoot = true;
                         }
                     }
-                    if (count !== 1 || !isRoot) {
-                        if (data.result.length > 1) {
-                            catalogDS.map(item => {
-                                item['type'] = 1;
-                                if (mapObj[item['_id']]) {
-                                    item['children'] = mapObj[item['_id']];
-                                }
-                            });
-                            retDS = this.formatCatalogData(catalogDS);
-                            this.setState({
-                                catalogDS: retDS
-                            });
-                        }
-                    } else {
-                        this.setState({
-                            apis: this.formatWikiDocData(apis, true)
-                        })
-                    }
-                    this.setState({
-                        module: data.result,
-                        rootId
-                    })
-                } else {
-                    Message.error(data.msg)
                 }
+                if (count !== 1 || !isRoot) {
+                    if (data.result.length > 1) {
+                        catalogDS.map(item => {
+                            item['type'] = 1;
+                            if (mapObj[item['_id']]) {
+                                item['children'] = mapObj[item['_id']];
+                            }
+                        });
+                        retDS = this.formatCatalogData(catalogDS);
+                        this.setState({
+                            catalogDS: retDS
+                        });
+                    }
+                } else {
+                    this.setState({
+                        apis: this.formatWikiDocData(apis, true)
+                    })
+                }
+                this.setState({
+                    module: data.result,
+                    rootId
+                })
+            } else {
+                Message.error(data.msg)
             }
         })
     };
@@ -445,17 +434,25 @@ class WikiDoc extends React.Component {
             } else {
 
             }
-            if (window.scrollY > this.refs.catalog.offsetTop + this.refs.catalog.clientHeight) {
+            if (window.scrollY > this.catalog.offsetTop + this.catalog.clientHeight) {
                 state['scroll'] = true;
             } else {
                 state['scroll'] = false;
             }
             this.setState(state);
-            // console.log(window.scrollY, this.refs.catalog.offsetTop + this.refs.catalog.clientHeight)
-            // this.setState({
-            //     down: window.scrollY > 66
-            // })
         };
+    };
+
+    componentDidUpdate = () => {
+        let href = window.location.href;
+        if(href.indexOf('#') !== -1){
+            let id = href.split('#')[1];
+            if(document.getElementById(id) && this.firstRender){
+                let offsetTop = document.getElementById(id).offsetTop;
+                window.document.documentElement.scrollTop = offsetTop;
+                this.firstRender = false;
+            }
+        }
     };
 
     componentWillUnmount = () => {
@@ -475,17 +472,17 @@ class WikiDoc extends React.Component {
             this.setState({
                 isSend: true
             });
-            this.isConnectable(host,param,cookie);
+            this.isConnectable(host, param, cookie);
         } else {
             Message.info('请输入请求URL及cookie信息')
         }
     };
 
     showModal = () => {
-        this.formatParams();
-        document.body.style.overflow = 'hidden';
-        this.refs.modal.style.display = 'flex';
-        this.refs.modal.classList.add('fade_in');
+        // this.formatParams();
+        // document.body.style.overflow = 'hidden';
+        // this.refs.modal.style.display = 'flex';
+        // this.refs.modal.classList.add('fade_in');
     };
 
     hideModal = () => {
@@ -505,12 +502,10 @@ class WikiDoc extends React.Component {
     };
 
     formatParams = () => {
-        let apis = this.state.apis;
         let paramArr = [];
-        apis.map((item, index) => {
+        this.state.paramArr.map((item, index) => {
             paramArr.push(this.formatParam(item, index));
         });
-        console.log(paramArr);
         this.setState({
             paramArr
         })
@@ -518,11 +513,19 @@ class WikiDoc extends React.Component {
 
     formatParam = (api, index) => {
         let formatParam = {};
-        let paramObj = api.paramTable;
-        formatParam['url'] = api.url;
+        let paramObj;
+        let arr = api.url.split('/');
+        try {
+            formatParam['jsonTable'] = JSON.parse(api.jsonTable);
+            paramObj = JSON.parse(api.paramTable);
+        } catch (e) {
+            formatParam['jsonTable'] = [];
+            paramObj = [];
+        }
+        arr.splice(0, 2);
+        formatParam['url'] = '/' + arr.join('/');
         formatParam['description'] = api.description;
         formatParam['index'] = index;
-        formatParam['jsonTable'] = api.jsonTable;
         formatParam['method'] = api.method;
         formatParam['params'] = {};
         paramObj.map(p => {
@@ -548,49 +551,113 @@ class WikiDoc extends React.Component {
     };
 
     changeStatus = () => {
-        if(this.state.sort){
+        if (this.state.sort) {
             this.setState({
                 sort: false
             })
-        }else{
+        } else {
             this.setState({
                 sort: true
             })
         }
     };
 
+    countKeys = (obj) => {
+        let count = 0;
+        for (let k in obj) {
+            count++;
+        }
+        return count;
+    };
+
     isValidReturn = (jsonTable, result) => {
-        let data = {
+        let state = true;
+        let paramNameArr = [], op = 'eq';
+        let retLength = this.countKeys(result);// 1.返回字段数目不同 则判断 缺少 或 多余 2.数目相同判断内层结构是否相同
+        // 定义一个状态 默认为true 只要失败置为false
+        // 1.遍历json结构 2.如果有子元素则递归 3.没有的话则直接判断
+        if (retLength > jsonTable.length) {
+            jsonTable.map(item => {
+                for (let k in result) {
+                    if (k === item['paramName'] || item['paramName'] === 'THIS_iS_ARRAY_TYPE') {
+                        if (item.hasOwnProperty('children') || (item['paramName'] === 'THIS_iS_ARRAY_TYPE' && (item['paramType'][0] === 'object' || item['paramType'][0] === 'array'))) {
+                            let res = this.isValidReturn(item.children, result[k]);
+                            state = res.state;
+                            op = res.op;
+                            paramNameArr = Array.prototype.concat.call(paramNameArr, res.paramNameArr);
+                        }
+                        // else if(typeof result[k] !== item['paramType'][0]){
+                        //
+                        // }
+                    } else {
+                        state = false;
+                        paramNameArr.push(k)
+                    }
+                }
+            });
+        } else {
+            jsonTable.map(item => {
+                if (result.hasOwnProperty(item.paramName) || item['paramName'] === 'THIS_iS_ARRAY_TYPE') {
+                    let res = {};
+                    // 确认条件
+                    if (item['paramName'] === 'THIS_iS_ARRAY_TYPE' && (item['paramType'][0] === 'object' || item['paramType'][0] === 'array')) {
+                        res = this.isValidReturn(item.children, result[0]);
+                        state = res.state;
+                        op = res.op;
+                        paramNameArr = Array.prototype.concat.call(paramNameArr, res.paramNameArr)
+                    } else if (item.hasOwnProperty('children')) {
+                        res = this.isValidReturn(item.children, result[item.paramName]);
+                        state = res.state;
+                        op = res.op;
+                        paramNameArr = Array.prototype.concat.call(paramNameArr, res.paramNameArr)
+                    }
+                } else {
+                    state = false;
+                    paramNameArr.push(item.paramName)
+                }
+            });
+        }
+        return {
+            state,
+            op,
+            paramNameArr
+        };
+    };
+
+    isValidReturns = (jsonTable, ret, i) => {
+        let resultArr = ret.result;
+        let params = ret.params;
+        let totalCount = {
             pass: 0,
             fail: 0
         };
-        // 定义一个状态 默认为true 只要失败置为false
-        // 1.遍历json结构 2.如果有子元素则递归 3.没有的话则直接判断
-        jsonTable.map(item=>{
-            if(item.hasOwnProperty('children')){
-
-            }else{
-                if(result.hasOwnProperty(item.paramName)){
-
-                }
+        let paramArr = [...this.state.paramArr];
+        paramArr[i]['testResult'] = [];
+        resultArr.map((res, index) => {
+            let result = this.isValidReturn(jsonTable, res);
+            let item = {};
+            item['param'] = params[index];
+            item['result'] = res;
+            if (result.state) {
+                totalCount.pass++;
+            } else {
+                let failMsg = `返回值缺少字段: ${result.paramNameArr.join(',')}`;
+                item['failMsg'] = failMsg;
+                totalCount.fail++;
             }
-        })
-        // 判断状态 失败则fail++ 成功则pass++
-    };
-
-    isValidReturns = (jsonTable, resultArr) => {
-        let passCount = 0;
-        let failCount = 0;
-        let failMsg = '';
-        resultArr.map(res=>{
-            jsonTable.map(json=>{
-                if(res.hasOwnProperty(json.paramName)){
-                    if(json.hasOwnProperty('children')){
-
-                    }
-                }
-            })
-        })
+            paramArr[i]['testResult'].push(item);
+            paramArr[i]['totalCount'] = totalCount;
+        });
+        paramArr[i]['passRate'] = Math.round(totalCount.pass / (totalCount.pass + totalCount.fail) * 10000) / 100;
+        paramArr[i]['failRate'] = Math.round(totalCount.fail / (totalCount.pass + totalCount.fail) * 10000) / 100;
+        if (totalCount.fail === 0) {
+            paramArr[i]['status'] = 200;
+        } else if (totalCount.success === 0) {
+            paramArr[i]['status'] = 500
+        } else if (totalCount.fail !== 0 && totalCount.success !== 0) {
+            paramArr[i]['status'] = 302;
+        }
+        this.setState({paramArr});
     };
 
     reOrder = (value) => {
@@ -600,6 +667,9 @@ class WikiDoc extends React.Component {
     };
 
     render() {
+
+        const {pro, apis, catalogDS} = this.state;
+
         return (
             <section className="wiki-doc">
                 <input type="text" ref="copy_panel" style={{position: 'absolute', top: -100, left: 20, zIndex: -999}}/>
@@ -610,42 +680,27 @@ class WikiDoc extends React.Component {
                         display: 'inline-flex',
                         width: 550,
                         overflow: 'hidden'
-                    }}>{this.state.pro.projectName}<span
-                        style={{fontSize: 16}}>{`(${this.state.pro.description})`}</span></span>
-                    {/*<Button  style={{float: 'right', marginRight: 20, marginTop: 19}}  onClick={(e)=>this.copyUrl(e, 'pro')} type="dashed"><Icon type="share-alt"/>分享</Button>*/}
+                    }}>{pro.projectName}<span
+                        style={{fontSize: 16}}>{`(${pro.description})`}</span></span>
                     <Button style={{float: 'right', marginRight: 20, marginTop: 19}} onClick={this.showAPIManageModal}
                             type="dashed">接口管理</Button>
                     <Button style={{float: 'right', marginRight: 20, marginTop: 19}}
                             onClick={this.showModuleManageModal} type="dashed">模块管理</Button>
                     <Button style={{float: 'right', marginRight: 20, marginTop: 19}} onClick={this.showModal}
-                            type="dashed">接口测试</Button>
+                            type="dashed" disabled>接口测试</Button>
                 </div>
                 {/*目录*/}
                 <div className="wiki-doc-content">
-                    <div className={ this.state.apis.length || this.state.catalogDS.length ? "nav-container" : ''}
-                         ref="catalog">
-                        {
-                            this.state.catalogDS.length ? this.state.catalogDS.map((item, index) => {
-                                return (<div key={`navTo-${index}`} className="nav-item-container">
-                                    <a className={"nav_interface catalog-" + item.type}
-                                       href={`#interface-${item.key}`}>{`${item.order} ${item.moduleName ? item.moduleName : item.description}`}</a>
-                                </div>)
-                            }) : this.state.apis.map((item, index) => {
-                                return (<div key={`navTo-${index}`} className="nav-item-container">
-                                    <a className="nav_interface"
-                                       href={`#interface-${item.key}`}>{item.description}</a>
-                                </div>)
-                            })
-                        }
-                    </div>
+                    <Nav isShow={apis.length || catalogDS.length} moduleDiff={!!catalogDS.length}
+                         dataSource={catalogDS.length ? catalogDS : apis} cb={catalog => this.catalog = catalog}/>
                     {/*接口组件实例*/}
                     <div className="api-ins-item">
                         {
-                            this.state.catalogDS.length ? this.state.catalogDS.map((item, index) => {
+                            catalogDS.length ? catalogDS.map((item, index) => {
                                 return <InterfaceIns copyUrl={(e) => this.copyUrl(e, 'api')} index={item.order}
                                                      id={`interface-${item.key}`}
                                                      type={item.type} key={`interface-${index}`} interfaceIns={item}/>
-                            }) : this.state.apis.map((item, index) => {
+                            }) : apis.map((item, index) => {
                                 return <InterfaceIns copyUrl={(e) => this.copyUrl(e, 'api')}
                                                      index={item.order ? item.order : (index + 1) }
                                                      id={`interface-${item.key}`}
@@ -664,7 +719,7 @@ class WikiDoc extends React.Component {
                             style={{fontSize: 34, color: '#fff', padding: '4px 5px'}} type="share-alt"/></a></div>
                     </Tooltip>
                     <Tooltip overlay={<div>返回顶部</div>} mouseLeaveDelay={0} placement="left">
-                        <div className="back-top anchor" style={{display: this.state.scroll ? 'block' : 'none'}}><a
+                        <div className="back-top anchor" style={{opacity: this.state.scroll ? '1' : '0'}}><a
                             onClick={this.scrollTop}><Icon style={{fontSize: 38, color: '#fff', padding: '3px 4px'}}
                                                            type="up"/></a></div>
                     </Tooltip>
@@ -672,7 +727,6 @@ class WikiDoc extends React.Component {
                 <Modal
                     title="接口管理"
                     visible={this.state.editPanelVisible}
-                    // style={{top: 0}}
                     width={1280}
                     maskClosable={false}
                     footer={[<Button key="closeApiManage" onClick={this.hideAPIManageModal}>关闭</Button>]}
@@ -701,106 +755,98 @@ class WikiDoc extends React.Component {
                 >
                     <ModuleManage pro={this.state.pro}/>
                 </Modal>
-                {/*<Modal*/}
-                {/*title="接口测试"*/}
-                {/*visible={this.state.sendVisible}*/}
-                {/*width={600}*/}
-                {/*maskClosable={false}*/}
-                {/*footer={[<Button key="closeApiManage" onClick={this.hideSendModal}>关闭</Button>]}*/}
-                {/*onCancel={this.hideSendModal}*/}
-                {/*>*/}
                 <section ref="modal" className="api-test-area">
                     <div className="api-test-tab-area">
                         <DragPanel reOrder={this.reOrder} apis={this.state.paramArr} sort={this.state.sort}/>
                         <div className="mask" ref="mask"></div>
                         <Loading style={{display: this.state.isSend ? 'block' : 'none'}}/>
                         {/*<div className="test-api-datalist">*/}
-                            {/*<div className="test-api-header clearfix">*/}
-                                {/*<span>排序</span>*/}
-                                {/*<span>接口URL</span>*/}
-                                {/*<span>通过率</span>*/}
-                                {/*<span>测试结果</span>*/}
-                            {/*</div>*/}
-                            {/*<div className="test-api-list">*/}
-                                {/*<div className="test-api-item clearfix" onClick={this.showChild.bind(this)}>*/}
-                                    {/*<div>*/}
-                                        {/*<span>*/}
-                                            {/*<Icon className="dl-up" type="up-square-o"/>*/}
-                                            {/*<Icon className="dl-down" type="down-square-o"/>*/}
-                                        {/*</span>*/}
-                                        {/*<span>www.baidu.com</span>*/}
-                                        {/*<span>240/250</span>*/}
-                                        {/*<span><Tag type="pass"/></span>*/}
-                                    {/*</div>*/}
-                                    {/*<div className="api-test-detail">*/}
-                                        {/*<div>1</div>*/}
-                                        {/*<div>2</div>*/}
-                                        {/*<div>3</div>*/}
-                                        {/*<div>4</div>*/}
-                                        {/*<div>5</div>*/}
-                                        {/*<div>2</div>*/}
-                                        {/*<div>3</div>*/}
-                                        {/*<div>4</div>*/}
-                                        {/*<div>5</div>*/}
-                                    {/*</div>*/}
-                                {/*</div>*/}
-                            {/*</div>*/}
-                            {/*<div className="test-api-list">*/}
-                                {/*<div className="test-api-item clearfix" onClick={this.showChild.bind(this)}>*/}
-                                    {/*<span>*/}
-                                        {/*<Icon className="dl-up" type="up-square-o"/>*/}
-                                        {/*<Icon className="dl-down" type="down-square-o"/>*/}
-                                    {/*</span>*/}
-                                    {/*<span>www.baidu.com</span>*/}
-                                    {/*<span>240/250</span>*/}
-                                    {/*<span><Tag type="review"/></span>*/}
-                                    {/*<div className="api-test-detail">show this</div>*/}
-                                {/*</div>*/}
-                            {/*</div>*/}
-                            {/*<div className="test-api-list">*/}
-                                {/*<div className="test-api-item clearfix" onClick={this.showChild.bind(this)}>*/}
-                                    {/*<span>*/}
-                                        {/*<Icon className="dl-up" type="up-square-o"/>*/}
-                                        {/*<Icon className="dl-down" type="down-square-o"/>*/}
-                                    {/*</span>*/}
-                                    {/*<span>www.baidu.com</span>*/}
-                                    {/*<span>240/250</span>*/}
-                                    {/*<span><Tag type="fail"/></span>*/}
-                                    {/*<div className="api-test-detail">show this</div>*/}
-                                {/*</div>*/}
-                            {/*</div>*/}
+                        {/*<div className="test-api-header clearfix">*/}
+                        {/*<span>排序</span>*/}
+                        {/*<span>接口URL</span>*/}
+                        {/*<span>通过率</span>*/}
+                        {/*<span>测试结果</span>*/}
+                        {/*</div>*/}
+                        {/*<div className="test-api-list">*/}
+                        {/*<div className="test-api-item clearfix" onClick={this.showChild.bind(this)}>*/}
+                        {/*<div>*/}
+                        {/*<span>*/}
+                        {/*<Icon className="dl-up" type="up-square-o"/>*/}
+                        {/*<Icon className="dl-down" type="down-square-o"/>*/}
+                        {/*</span>*/}
+                        {/*<span>www.baidu.com</span>*/}
+                        {/*<span>240/250</span>*/}
+                        {/*<span><Tag type="pass"/></span>*/}
+                        {/*</div>*/}
+                        {/*<div className="api-test-detail">*/}
+                        {/*<div>1</div>*/}
+                        {/*<div>2</div>*/}
+                        {/*<div>3</div>*/}
+                        {/*<div>4</div>*/}
+                        {/*<div>5</div>*/}
+                        {/*<div>2</div>*/}
+                        {/*<div>3</div>*/}
+                        {/*<div>4</div>*/}
+                        {/*<div>5</div>*/}
+                        {/*</div>*/}
+                        {/*</div>*/}
+                        {/*</div>*/}
+                        {/*<div className="test-api-list">*/}
+                        {/*<div className="test-api-item clearfix" onClick={this.showChild.bind(this)}>*/}
+                        {/*<span>*/}
+                        {/*<Icon className="dl-up" type="up-square-o"/>*/}
+                        {/*<Icon className="dl-down" type="down-square-o"/>*/}
+                        {/*</span>*/}
+                        {/*<span>www.baidu.com</span>*/}
+                        {/*<span>240/250</span>*/}
+                        {/*<span><Tag type="review"/></span>*/}
+                        {/*<div className="api-test-detail">show this</div>*/}
+                        {/*</div>*/}
+                        {/*</div>*/}
+                        {/*<div className="test-api-list">*/}
+                        {/*<div className="test-api-item clearfix" onClick={this.showChild.bind(this)}>*/}
+                        {/*<span>*/}
+                        {/*<Icon className="dl-up" type="up-square-o"/>*/}
+                        {/*<Icon className="dl-down" type="down-square-o"/>*/}
+                        {/*</span>*/}
+                        {/*<span>www.baidu.com</span>*/}
+                        {/*<span>240/250</span>*/}
+                        {/*<span><Tag type="fail"/></span>*/}
+                        {/*<div className="api-test-detail">show this</div>*/}
+                        {/*</div>*/}
+                        {/*</div>*/}
                         {/*</div>*/}
                     </div>
-                    <div className="wrapper">
-                        <div className="api-form-area">
-                            <div className="api-title">接口测试</div>
-                            <div className="api-input-area">
-                                <div className="form-item">
-                                    <div>请求URL</div>
-                                    <div>
-                                        <Input placeholder={"请输入后台域名及端口号"} value={this.state.url}
-                                               onChange={(e) => this.setInput('url', e)}/>
-                                    </div>
-                                </div>
-                                <div className="form-item">
-                                    <div>cookie</div>
-                                    <div>
-                                        <Input value={this.state.cookie} autosize={{minRows: 5, maxRows: 10}}
-                                               type="textarea" onChange={(e) => this.setInput('cookie', e)}/>
-                                    </div>
-                                </div>
-                                <div className="form-item">
-                                    <Button style={{width: '100%'}} type="primary"
-                                            onClick={this.startTestApi}>{this.state.isSend ?
-                                        <Icon style={{fontSize: 16}} type="loading"/> : 'Send!'}</Button>
-                                </div>
-                            </div>
-                            <div className="api-switch">
-                                <span onClick={this.changeStatus}>{this.state.sort ? 'Done' : 'Sort'}</span>
-                                <span onClick={this.hideModal}>Close</span>
-                            </div>
-                        </div>
-                    </div>
+                    {/*<div className="wrapper">*/}
+                        {/*<div className="api-form-area">*/}
+                            {/*<div className="api-title">接口测试</div>*/}
+                            {/*<div className="api-input-area">*/}
+                                {/*<div className="form-item">*/}
+                                    {/*<div>请求URL</div>*/}
+                                    {/*<div>*/}
+                                        {/*<Input placeholder={"请输入后台域名及端口号"} value={this.state.url}*/}
+                                               {/*onChange={(e) => this.setInput('url', e)}/>*/}
+                                    {/*</div>*/}
+                                {/*</div>*/}
+                                {/*<div className="form-item">*/}
+                                    {/*<div>cookie</div>*/}
+                                    {/*<div>*/}
+                                        {/*<Input value={this.state.cookie} autosize={{minRows: 5, maxRows: 10}}*/}
+                                               {/*type="textarea" onChange={(e) => this.setInput('cookie', e)}/>*/}
+                                    {/*</div>*/}
+                                {/*</div>*/}
+                                {/*<div className="form-item">*/}
+                                    {/*<Button style={{width: '100%'}} type="primary"*/}
+                                            {/*onClick={this.startTestApi}>{this.state.isSend ?*/}
+                                        {/*<Icon style={{fontSize: 16}} type="loading"/> : 'Send!'}</Button>*/}
+                                {/*</div>*/}
+                            {/*</div>*/}
+                            {/*<div className="api-switch">*/}
+                                {/*<span onClick={this.changeStatus}>{this.state.sort ? 'Done' : 'Sort'}</span>*/}
+                                {/*<span onClick={this.hideModal}>Close</span>*/}
+                            {/*</div>*/}
+                        {/*</div>*/}
+                    {/*</div>*/}
                 </section>
             </section>
         )

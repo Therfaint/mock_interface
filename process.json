@@ -1,0 +1,11 @@
+{
+  "apps": [
+    {
+      "name": "tdim",
+      "script": "./server.js",
+      "watch": false,
+      "exec_interpreter": "babel-node",
+      "exec_mode": "fork"
+    }
+  ]
+}

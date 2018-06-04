@@ -1,17 +1,13 @@
 /**
  * Created by therfaint- on 09/11/2017.
  */
+import fetch from '../../util/fetch';
+
 import React from 'react';
-import ReactDOM from 'react-dom';
 //Common Components
 import Icon from 'antd/lib/icon';
 import Button from 'antd/lib/button';
-import Input from 'antd/lib/input';
-import Radio from 'antd/lib/radio';
-import Form from 'antd/lib/form';
-import Tooltip from 'antd/lib/tooltip';
 import Checkbox from 'antd/lib/checkbox';
-import Modal from 'antd/lib/modal';
 import Message from 'antd/lib/message';
 
 import moment from 'moment';
@@ -20,7 +16,6 @@ import 'moment/locale/zh-cn';
 moment.locale('zh-cn');
 
 const CheckboxGroup = Checkbox.Group;
-const RadioGroup = Radio.Group;
 
 const dateFormat = 'YYYY-MM-DD HH:mm:ss';
 
@@ -40,22 +35,18 @@ class VoteArea extends React.Component {
 
     submit = () => {
         if(this.state.selected.length || this.index){
-            $.ajax({
-                url: '/saveVote.json',
-                method: 'POST',
-                data: {
-                    select: this.state.selected,
-                    experience: this.index,
-                    voteTime: moment().format(dateFormat)
-                },
-                dataType: 'JSON',
-                success: data => {
-                    window.scrollTo(0,0);
-                    if(data.success){
-                        Message.success(data.msg);
-                    }else{
-                        Message.error(data.msg);
-                    }
+            let url = '/saveVote.json';
+            let data = {
+                select: this.state.selected,
+                experience: this.index,
+                voteTime: moment().format(dateFormat)
+            };
+            fetch(url, data).then(data => {
+                window.scrollTo(0,0);
+                if(data.success){
+                    Message.success(data.msg);
+                }else{
+                    Message.error(data.msg);
                 }
             })
         }

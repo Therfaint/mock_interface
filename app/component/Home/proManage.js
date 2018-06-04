@@ -1,6 +1,8 @@
 /**
  * Created by therfaint- on 01/11/2017.
  */
+import fetch from '../../util/fetch';
+
 import React, {Component, PropTypes} from 'react';
 import Message from 'antd/lib/message';
 import Input from 'antd/lib/input';
@@ -44,104 +46,81 @@ class ProManage extends Component {
     };
 
     createPro = () => {
-        $.ajax({
-            url: '/queryByCodeOrName.json',
-            method: 'POST',
-            data: {
-                searchType: 'projectCode',
-                input: this.state.projectCode
-            },
-            dataType: 'JSON',
-            success: data => {
-                if(data.success && data.result.length === 0){
-                    $.ajax({
-                        url: '/savePro.json',
-                        method: 'POST',
-                        data: {
-                            projectCode: this.state.projectCode,
-                            projectName: this.state.projectName,
-                            description: this.state.description,
-                            createTime: moment().format(dateFormat)
-                        },
-                        dataType: 'JSON',
-                        success: data => {
-                            if (data.success) {
-                                Message.success('项目创建成功');
-                                this.getAllPros();
-                                this.createModule(data.id);
-                            } else {
-                                Message.error('项目创建失败');
-                            }
-                        }
-                    })
-                }else{
-                    Message.error('该项目编号已存在');
-                }
+        let url = '/queryByCodeOrName.json';
+        let data = {
+            searchType: 'projectCode',
+            input: this.state.projectCode
+        };
+        fetch(url, data).then(data => {
+            if(data.success && data.result.length === 0){
+                return fetch('/savePro.json', {
+                    projectCode: this.state.projectCode,
+                    projectName: this.state.projectName,
+                    description: this.state.description,
+                    createTime: moment().format(dateFormat)
+                });
+            }else{
+                Message.error('该项目编号已存在');
+            }
+        }).then(data=>{
+            if (data.success) {
+                Message.success('项目创建成功');
+                this.getAllPros();
+                this.createModule(data.id);
+            } else {
+                Message.error('项目创建失败');
             }
         })
     };
 
     createModule = (id) => {
-        $.ajax({
-            url: '/saveModule.json',
-            method: 'POST',
-            data: {
-                moduleName: '系统目录',
-                description: '系统默认模块',
-                proId: id
-            },
-            dataType: 'JSON',
-            success: data => {
-                if(data.success){
-                    Message.success('项目模块初始化成功');
-                    this.setState({
-                        createProVisible: false
-                    });
-                    setTimeout(function () {
-                        window.location.href = `/wiki/pageId=${id}`;
-                        // window.open(`/wiki/pageId=${id}`)
-                    }, 3000);
-                }else{
-                    Message.error(data.msg)
-                }
+        let url = '/saveModule.json';
+        let data = {
+            moduleName: '系统目录',
+            description: '系统默认模块',
+            proId: id
+        };
+        fetch(url, data).then(data => {
+            if(data.success){
+                Message.success('项目模块初始化成功');
+                this.setState({
+                    createProVisible: false
+                });
+                setTimeout(function () {
+                    window.location.href = `/wiki/pageId=${id}`;
+                }, 3000);
+            }else{
+                Message.error(data.msg)
             }
         })
     };
 
     queryPro = (input) => {
-        $.ajax({
-            url: '/queryByCodeOrName.json',
-            method: 'POST',
-            data: {
-                searchType: this.state.searchType,
-                input: input
-            },
-            dataType: 'JSON',
-            success: data => {
-                if(data.success){
-                    this.setState({
-                        pros: data.result
-                    })
-                }else{
-                    Message.error(data.msg)
-                }
+        let url = '/queryByCodeOrName.json';
+        let data = {
+            searchType: this.state.searchType,
+            input: input
+        };
+        fetch(url, data).then(data => {
+            if(data.success){
+                this.setState({
+                    pros: data.result
+                })
+            }else{
+                Message.error(data.msg)
             }
         })
     };
 
     getAllPros = () => {
-        $.ajax({
-            url: '/getAllPro.json',
-            method: 'GET',
-            dataType: 'JSON',
-            success: data => {
-                if (data.success) {
-                    this.setState({
-                        pros: data.result
-                    })
-                } else {
-                    Message.error(data.msg);
-                }
+        let url = '/getAllPro.json';
+        fetch(url).then(data => {
+            if (data.success) {
+                this.setState({
+                    pros: data.result
+                })
+            } else {
+                Message.error(data.msg);
             }
         })
     };
@@ -212,43 +191,42 @@ class ProManage extends Component {
             })
         }
         this.deleteIdArr = arr;
-        console.log(this.deleteIdArr);
     };
 
-    changeStatus = () => {
-        if(this.state.status){
-            Modal.confirm({
-                content: '确认删除选中条目？',
-                okText: '确定',
-                cancelText: '取消',
-                onOk: () => {
-                    $.ajax({
-                        url: '/deletePro.json',
-                        data: {
-                            id: this.deleteIdArr
-                        },
-                        method: 'POST',
-                        dataType: 'JSON',
-                        success: data => {
-                            if(data.success){
-                                Message.success('删除成功');
-                                this.deleteIdArr = [];
-                                this.setState({status: false});
-                            }else{
-                                Message.error(data.msg)
-                            }
-                            this.getAllPros();
-                        }
-                    })
-                },
-                onCancel: () => {
-                    this.setState({status: false});
-                }
-            });
-        }else{
-            this.setState({status: true});
-        }
-    };
+    // changeStatus = () => {
+    //     if(this.state.status){
+    //         Modal.confirm({
+    //             content: '确认删除选中条目？',
+    //             okText: '确定',
+    //             cancelText: '取消',
+    //             onOk: () => {
+    //                 $.ajax({
+    //                     url: '/deletePro.json',
+    //                     data: {
+    //                         id: this.deleteIdArr
+    //                     },
+    //                     method: 'POST',
+    //                     dataType: 'JSON',
+    //                     success: data => {
+    //                         if(data.success){
+    //                             Message.success('删除成功');
+    //                             this.deleteIdArr = [];
+    //                             this.setState({status: false});
+    //                         }else{
+    //                             Message.error(data.msg)
+    //                         }
+    //                         this.getAllPros();
+    //                     }
+    //                 })
+    //             },
+    //             onCancel: () => {
+    //                 this.setState({status: false});
+    //             }
+    //         });
+    //     }else{
+    //         this.setState({status: true});
+    //     }
+    // };
 
     linkToWiki = (item) => {
         window.location.href = `/wiki/pageId=${item._id}`;

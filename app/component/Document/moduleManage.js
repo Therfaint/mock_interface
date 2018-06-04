@@ -1,30 +1,19 @@
 /**
  * Created by therfaint- on 08/11/2017.
  */
+import fetch from '../../util/fetch';
+
 import React from 'react';
 import Message from 'antd/lib/message';
 import Input from 'antd/lib/input';
 import Icon from 'antd/lib/icon';
-import Tooltip from 'antd/lib/tooltip';
-import Select from 'antd/lib/select';
 import Table from 'antd/lib/table';
 import Button from 'antd/lib/button';
 import Modal from 'antd/lib/modal';
 import Notification from 'antd/lib/notification';
-import TreeSelect from 'antd/lib/tree-select';
 import moment from 'moment';
 import 'moment/locale/zh-cn';
 moment.locale('zh-cn');
-
-import JsonFormatter from '../util/JSON_Format'
-
-import ParamTable from './editable_param_table';
-
-import dataParser from '../util/Data_Parser';
-
-const dateFormat = 'YYYY-MM-DD HH:mm:ss';
-
-const Option = Select.Option;
 
 Message.config({
     duration: 2,
@@ -86,20 +75,15 @@ class ModuleManage extends React.Component {
             description: this.state.description,
             proId: this.props.pro._id
         };
-        $.ajax({
-            url: '/saveModule.json',
-            data: data,
-            method: 'POST',
-            dataType: 'JSON',
-            success: data => {
-                if (data.success) {
-                    Message.success('模块创建成功');
-                    this.getAllModuleByProId();
-                } else {
-                    Message.error(data.msg.message)
-                }
+        let url = '/saveModule.json';
+        fetch(url, data).then(data => {
+            if (data.success) {
+                Message.success('模块创建成功');
+                this.getAllModuleByProId();
+            } else {
+                Message.error(data.msg.message)
             }
-        })
+        });
     };
 
     // 删除API
@@ -109,51 +93,43 @@ class ModuleManage extends React.Component {
             okText: '确定',
             cancelText: '取消',
             onOk: () => {
-                $.ajax({
-                    url: '/deleteModule.json',
-                    data: {
-                        id: record._id,
-                        rootId: this.state.rootId
-                    },
-                    method: 'POST',
-                    dataType: 'JSON',
-                    success: data => {
-                        if (data.success) {
-                            Message.success('删除成功');
-                            this.getAllModuleByProId();
-                        } else {
-                            Message.error(data.msg)
-                        }
+                let data = {
+                    id: record._id,
+                    rootId: this.state.rootId
+                };
+                let url = '/deleteModule.json';
+                fetch(url, data).then(data => {
+                    if (data.success) {
+                        Message.success('删除成功');
+                        this.getAllModuleByProId();
+                    } else {
+                        Message.error(data.msg)
                     }
-                })
+                });
             }
         });
     };
 
     // 获取全部模块
     getAllModuleByProId = () => {
-        $.ajax({
-            url: '/getAllModuleById.json?proId=' + this.state.pageId,
-            method: 'GET',
-            dataType: 'JSON',
-            success: data => {
-                let rootId = '';
-                data.result.map(item => {
-                    item.key = item._id;
-                    if(item.moduleName === '系统目录'){
-                        rootId = item._id;
-                    }
-                });
-                if (data.success) {
-                    this.setState({
-                        modules: data.result,
-                        rootId
-                    })
-                } else {
-                    Message.error(data.msg)
+        let url = '/getAllModuleById.json?proId=' + this.state.pageId;
+        fetch(url).then(data => {
+            let rootId = '';
+            data.result.map(item => {
+                item.key = item._id;
+                if(item.moduleName === '系统目录'){
+                    rootId = item._id;
                 }
+            });
+            if (data.success) {
+                this.setState({
+                    modules: data.result,
+                    rootId
+                })
+            } else {
+                Message.error(data.msg)
             }
-        })
+        });
     };
 
     // 显示新增API Modal
@@ -170,10 +146,6 @@ class ModuleManage extends React.Component {
             Message.error('请填写模块名称');
             return;
         }
-        // if (!this.state.description && bool) {
-        //     Message.error('请填写模块描述');
-        //     return;
-        // }
         if (bool) {
             this.saveModule();
         }

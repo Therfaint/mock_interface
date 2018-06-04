@@ -1,11 +1,11 @@
 /**
  * Created by therfaint- on 03/11/2017.
  */
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
 import {withRouter} from "react-router-dom";
 import {Switch, Route} from 'react-router';
-import ProManage from './component/proManage';
-import WikiDoc from './component/wikiDoc';
+import ProManage from './Home/proManage';
+import WikiDoc from './Document/wikiDoc';
 
 @withRouter
 class App extends Component {
@@ -14,6 +14,8 @@ class App extends Component {
         super(props);
         this.store = this.props.store;
     }
+
+    // TODO:权限判断
 
     render() {
         return (

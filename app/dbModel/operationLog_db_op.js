@@ -1,33 +1,27 @@
 /**
  * Created by therfaint- on 08/11/2017.
  */
-let mongoose = require('mongoose');
-let status = require('../util/DB_Op_Status');
+import mongoose from 'mongoose';
+import status from './dbConfig/DB_Op_Status';
+import options from './dbConfig/commonCfg';
 
 mongoose.Promise = global.Promise;
 
-const options = {
-    server: {
-        auto_reconnect: true,
-        poolSize: 10
-    }
-};
-
-module.exports = class opLogDbUtil{
+export default class opLogDbUtil{
 
     constructor(){
 
         this.conn = mongoose.createConnection('mongodb://127.0.0.1:27017/op_history', options);
 
         this.conn.on('error', function(error){
-            console.log('数据库连接失败!\n' + error);
+            console.log('Log DataBase Connect Failed !!\n' + error);
         });
 
         this.conn.once('open',function(error){
             if(error){
-                console.log('数据库连接失败!\n' + error);
+                console.log('Log DataBase Connect Failed !!\n' + error);
             }
-            console.log('数据库连接成功...');
+            console.log('Log DataBase Connect Success ...');
         });
 
         this.opHistorySchema = new mongoose.Schema({

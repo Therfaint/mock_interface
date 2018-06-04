@@ -16,25 +16,13 @@ class EditableCell extends React.Component {
     constructor(props){
         super(props);
         this.state = {
-            // editable: !this.props.value,
             value: this.props.value
         };
-        this.timeOut = null;
     }
 
     handleChange = (e) => {
         const value = e.target.value;
-        this.setState({ value });
-    };
-
-    check = () => {
-        if (this.props.onChange) {
-            this.props.onChange(this.state.value);
-        }
-    };
-
-    edit = () => {
-        this.setState({ editable: true });
+        this.props.onChange(value);
     };
 
     componentWillReceiveProps(nextProps) {
@@ -52,11 +40,10 @@ class EditableCell extends React.Component {
             <span className="editable-cell"  style={{width:180, display: 'inline-block', verticalAlign: 'middle'}}>
                 <span className="editable-cell-input-wrapper">
                     <Input
-                        style={{width:150, display: (value === 'THIS_iS_ARRAY_TYPE' ? 'none' : 'inline-block')}}
+                        style={{...this.props.style, display: (value === 'THIS_iS_ARRAY_TYPE' ? 'none' : 'inline-block')}}
                         value={value}
+                        disabled={this.props.hasOwnProperty('disabled')}
                         onChange={this.handleChange}
-                        onBlur={()=>this.check()}
-                        onPressEnter={()=>this.check()}
                     />
                 </span>
             </span>

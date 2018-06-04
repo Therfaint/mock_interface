@@ -1,11 +1,12 @@
 /**
  * Created by therfaint- on 01/08/2017.
  */
+import fetch from '../../util/fetch';
+
 import React from 'react';
 import Message from 'antd/lib/message';
 import Input from 'antd/lib/input';
 import Icon from 'antd/lib/icon';
-import Tooltip from 'antd/lib/tooltip';
 import Select from 'antd/lib/select';
 import Table from 'antd/lib/table';
 import Button from 'antd/lib/button';
@@ -17,11 +18,11 @@ import moment from 'moment';
 import 'moment/locale/zh-cn';
 moment.locale('zh-cn');
 
-import JsonFormatter from '../util/JSON_Format'
+import JsonFormatter from '../../util/JSON_Format'
 
 import ParamTable from './editable_param_table';
 
-import dataParser from '../util/Data_Parser';
+import dataParser from '../../util/Data_Parser';
 
 const dateFormat = 'YYYY-MM-DD HH:mm:ss';
 
@@ -48,25 +49,15 @@ class ApiManage extends React.Component {
             key: 'moduleName',
             width: 150,
             dataIndex: 'moduleName'
+        }, {
+            title: '接口描述',
+            key: 'url',
+            dataIndex: 'description',
+            width: 300,
+            render: (text, record, index) => (
+                <span>{record.description && record.hasOwnProperty('method') ? record.description : ''}</span>
+            )
         },
-            //     {
-            //     title: '请求路径',
-            //     key: 'url',
-            //     dataIndex: 'url',
-            //     width: 300,
-            //     render: (text, record, index) => (
-            //         <span>{record.url ? record.url : ''}</span>
-            //     )
-            // },
-            {
-                title: '接口描述',
-                key: 'url',
-                dataIndex: 'description',
-                width: 300,
-                render: (text, record, index) => (
-                    <span>{record.description && record.hasOwnProperty('method') ? record.description : ''}</span>
-                )
-            },
             {
                 title: '请求类型',
                 key: 'method',
@@ -150,7 +141,7 @@ class ApiManage extends React.Component {
 
             url: '',
             method: 'GET',
-            contentType: '1',
+            contentType: 'multipart/form-data',
             description: '',
             param: null,
             json: null,
@@ -188,108 +179,92 @@ class ApiManage extends React.Component {
 
     // 通过接口id数组导入
     importApiById = () => {
-        $.ajax({
-            url: '/importAPIs.json',
-            method: 'POST',
-            data: {
-                proId: this.state.pageId,
-                apiArr: this.state.value,
-                proCode: this.props.pro.projectCode,
-                moduleId: this.state.importTargetModule
-            },
-            dataType: 'JSON',
-            success: data => {
-                if (data.success) {
-                    Message.success('导入成功');
-                    this.getAllAPIByProId();
-                    this.getAllPros();
-                    this.getAllAPI();
-                } else {
-                    Message.error(data.msg)
-                }
+        let url = '/importAPIs.json';
+        let data = {
+            proId: this.state.pageId,
+            apiArr: this.state.value,
+            proCode: this.props.pro.projectCode,
+            moduleId: this.state.importTargetModule
+        };
+        fetch(url, data).then(data => {
+            if (data.success) {
+                Message.success('导入成功');
+                this.getAllAPIByProId();
+                this.getAllPros();
+                this.getAllAPI();
+            } else {
+                Message.error(data.msg)
             }
         })
     };
 
     // 获取全部用于导入的API
     getAllAPI = () => {
-        $.ajax({
-            url: '/getAllApi.json',
-            method: 'GET',
-            dataType: 'JSON',
-            success: data => {
-                if (data.success) {
-                    let apiMapObj = {};
-                    data.result.map(item => {
-                        let obj = {};
-                        obj['label'] = item.description;
-                        obj['value'] = item._id;
-                        obj['key'] = item._id;
-                        if (!apiMapObj.hasOwnProperty(item.refModuleId)) {
-                            apiMapObj[item.refModuleId] = [];
-                        }
-                        apiMapObj[item.refModuleId].push(obj);
-                    });
-                    this.setState({apiMapObj})
-                } else {
-                    Message.error(data.msg)
-                }
+        let url = '/getAllApi.json';
+        fetch(url).then(data => {
+            if (data.success) {
+                let apiMapObj = {};
+                data.result.map(item => {
+                    let obj = {};
+                    obj['label'] = item.description;
+                    obj['value'] = item._id;
+                    obj['key'] = item._id;
+                    if (!apiMapObj.hasOwnProperty(item.refModuleId)) {
+                        apiMapObj[item.refModuleId] = [];
+                    }
+                    apiMapObj[item.refModuleId].push(obj);
+                });
+                this.setState({apiMapObj})
+            } else {
+                Message.error(data.msg)
             }
         })
     };
 
     // 获取全部项目信息
     getAllPros = () => {
-        $.ajax({
-            url: '/getAllPro.json',
-            method: 'GET',
-            dataType: 'JSON',
-            success: data => {
-                if (data.success) {
-                    let pros = [];
-                    // 如果和当前项目相同则去除
-                    data.result.map(item => {
-                        let obj = {};
-                        // if (item._id !== this.props.pro._id) {
-                        obj['label'] = item.projectName;
-                        obj['value'] = item._id;
-                        obj['key'] = item._id;
-                        // obj['children'] = [];
-                        pros.push(obj);
-                        // }
-                    });
-                    this.setState({pros})
-                } else {
-                    Message.error(data.msg);
-                }
+        let url = '/getAllPro.json';
+        fetch(url).then(data => {
+            if (data.success) {
+                let pros = [];
+                // 如果和当前项目相同则去除
+                data.result.map(item => {
+                    let obj = {};
+                    // if (item._id !== this.props.pro._id) {
+                    obj['label'] = item.projectName;
+                    obj['value'] = item._id;
+                    obj['key'] = item._id;
+                    // obj['children'] = [];
+                    pros.push(obj);
+                    // }
+                });
+                this.setState({pros})
+            } else {
+                Message.error(data.msg);
             }
         })
     };
 
     // 获取全部项目信息
     getAllModules = () => {
-        $.ajax({
-            url: '/getAllModule.json',
-            method: 'GET',
-            dataType: 'JSON',
-            success: data => {
-                if (data.success) {
-                    let modules = [];
-                    data.result.map(item => {
-                        let obj = {};
-                        if (item._id !== this.props.pro._id) {
-                            obj['label'] = item.moduleName;
-                            obj['value'] = item._id;
-                            obj['key'] = item._id;
-                            obj['proId'] = item.refProId;
-                            // obj['children'] = [];
-                            modules.push(obj);
-                        }
-                    });
-                    this.setState({modules});
-                } else {
-                    Message.error(data.msg);
-                }
+        let url = '/getAllModule.json';
+        fetch(url).then(data => {
+            if (data.success) {
+                let modules = [];
+                data.result.map(item => {
+                    let obj = {};
+                    if (item._id !== this.props.pro._id) {
+                        obj['label'] = item.moduleName;
+                        obj['value'] = item._id;
+                        obj['key'] = item._id;
+                        obj['proId'] = item.refProId;
+                        // obj['children'] = [];
+                        modules.push(obj);
+                    }
+                });
+                this.setState({modules});
+            } else {
+                Message.error(data.msg);
             }
         })
     };
@@ -325,42 +300,40 @@ class ApiManage extends React.Component {
 
     // 根据id获取历史记录
     getHisById = (record) => {
-        $.ajax({
-            url: '/getHisById.json',
-            data: {
-                id: record._id
-            },
-            method: 'GET',
-            dataType: 'JSON',
-            success: data => {
-                if (data.success) {
-                    data.result.map(item => {
-                        item.key = item._id;
-                    });
-                    this.setState({
-                        apiHis: data.result
-                    })
-                } else {
-                    Message.error(data.msg)
-                }
+        let url = '/getHisById.json?id=' + record._id;
+        fetch(url).then(data => {
+            if (data.success) {
+                data.result.map(item => {
+                    item.key = item._id;
+                });
+                this.setState({
+                    apiHis: data.result
+                })
+            } else {
+                Message.error(data.msg)
             }
         })
     };
 
     // 新增API
     saveAPI = () => {
+        let url = '/saveApi.json';
         let data = {
             paramTable: JSON.stringify(this.state.addTableParam),
             jsonTable: JSON.stringify(this.state.addTableJson),
             method: this.state.method,
             contentType: this.state.contentType,
             createTime: moment().format(dateFormat),
-            json: JF.toJsonStr(JF.toJsonObj(DP.dataSourceFill(this.state.addTableJson), 1, true)),
+            json: JF.toJsonStr(this.state.json),
             description: this.state.description,
             moduleId: this.state.module,
             proId: this.state.pageId,
             proCode: this.props.pro.projectCode
         };
+        if (!data.json) {
+            Message.error('输入框中JSON格式异常!!!');
+            return;
+        }
         if (this.state.method === 'GET') {
             // 校验GET请求URL和JSON参数格式
             data.url = this.state.url;
@@ -369,19 +342,14 @@ class ApiManage extends React.Component {
             data.url = this.state.url;
             data.param = JF.toJsonStr(this.state.param);
         }
-        $.ajax({
-            url: '/saveApi.json',
-            data: data,
-            method: 'POST',
-            dataType: 'JSON',
-            success: data => {
-                if (data.success) {
-                    Message.success('创建成功');
-                } else {
-                    Message.error(data.msg.message)
-                }
-                this.getAllAPIByProId();
+        fetch(url, data).then(data => {
+            if (data.success) {
+                Message.success('创建成功');
+            } else {
+                Message.error(data.msg.message)
             }
+            this.hideModal();
+            this.getAllAPIByProId();
         })
     };
 
@@ -392,23 +360,19 @@ class ApiManage extends React.Component {
             okText: '确定',
             cancelText: '取消',
             onOk: () => {
-                $.ajax({
-                    url: '/deleteApi.json',
-                    data: {
-                        id: record._id,
-                        proId: this.state.pageId,
-                        lastUpdateTime: moment().format(dateFormat)
-                    },
-                    method: 'POST',
-                    dataType: 'JSON',
-                    success: data => {
-                        if (data.success) {
-                            Message.success('删除成功');
-                        } else {
-                            Message.error(data.msg)
-                        }
-                        this.getAllAPIByProId();
+                let url = '/deleteApi.json';
+                let data = {
+                    id: record._id,
+                    proId: this.state.pageId,
+                    lastUpdateTime: moment().format(dateFormat)
+                };
+                fetch(url, data).then(data => {
+                    if (data.success) {
+                        Message.success('删除成功');
+                    } else {
+                        Message.error(data.msg)
                     }
+                    this.getAllAPIByProId();
                 })
             }
         });
@@ -416,6 +380,7 @@ class ApiManage extends React.Component {
 
     // 编辑API
     updateAPI = () => {
+        let url = '/updateApi.json';
         let data = {
             proCode: this.props.pro.projectCode,
             paramTable: JSON.stringify(this.state.editTableParam),
@@ -424,103 +389,89 @@ class ApiManage extends React.Component {
             url: this.state.editUrl,
             method: this.state.editMethod,
             contentType: this.state.editContentType,
-            json: JF.toJsonStr(JF.toJsonObj(DP.dataSourceFill(this.state.editTableJson), 1, true)),
+            json: JF.toJsonStr(this.state.editJson),
             description: this.state.editDescription,
             moduleId: this.state.editModule,
             proId: this.state.pageId,
             lastUpdateTime: moment().format(dateFormat)
         };
-        $.ajax({
-            url: '/updateApi.json',
-            data: data,
-            method: 'POST',
-            dataType: 'JSON',
-            success: data => {
-                if (data.success) {
-                    Message.success('编辑成功');
-                } else {
-                    Message.error(data.msg)
-                }
-                this.getAllAPIByProId();
+        if (!data.json) {
+            Message.error('输入框中JSON格式异常!!!');
+            return;
+        }
+        fetch(url, data).then(data => {
+            if (data.success) {
+                Message.success('编辑成功');
+            } else {
+                Message.error(data.msg)
             }
+            this.hideModal();
+            this.getAllAPIByProId();
         })
     };
 
     // todo回滚单条接口
     rollbackApi = (record) => {
+        let url = '/hisRollback.json';
         let data = {
             id: record.refApiId,
             param: record.api
         };
-        $.ajax({
-            url: '/hisRollback.json',
-            data: data,
-            method: 'POST',
-            dataType: 'JSON',
-            success: data => {
-                if (data.success) {
-                    Message.success('接口回滚成功');
-                    this.setState({
-                        rollBackVisible: false
-                    })
-                } else {
-                    Message.error(data.msg);
-                }
-                this.getAllAPIByProId();
+        fetch(url, data).then(data => {
+            if (data.success) {
+                Message.success('接口回滚成功');
+                this.setState({
+                    rollBackVisible: false
+                })
+            } else {
+                Message.error(data.msg);
             }
+            this.getAllAPIByProId();
         })
     };
 
     // 获取全部模块
     getAllModuleByProId = (map) => {
-        $.ajax({
-            url: '/getAllModuleById.json?proId=' + this.props.pro._id,
-            method: 'GET',
-            dataType: 'JSON',
-            success: data => {
-                if (data.success) {
-                    data.result.map(item => {
-                        item.key = item._id;
-                        if (map[item['_id']]) {
-                            item['children'] = map[item['_id']];
-                        }
-                    });
-                    this.setState({
-                        apis: data.result
-                    })
-                } else {
-                    Message.error(data.msg)
-                }
+        let url = '/getAllModuleById.json?proId=' + this.props.pro._id;
+        fetch(url).then(data => {
+            if (data.success) {
+                data.result.map(item => {
+                    item.key = item._id;
+                    if (map[item['_id']]) {
+                        item['children'] = map[item['_id']];
+                    }
+                });
+                this.setState({
+                    apis: data.result
+                })
+            } else {
+                Message.error(data.msg)
             }
         })
     };
 
     // 获取全部API
     getAllAPIByProId = () => {
-        $.ajax({
-            url: '/getAllApiById.json?proId=' + this.props.pro._id,
-            method: 'GET',
-            dataType: 'JSON',
-            success: data => {
-                if (data.success) {
-                    let map = {};
-                    data.result.map(item => {
-                        item.key = item._id;
-                        let arr = item.url.split('/');
-                        arr.splice(0, 2);
-                        item.url = '/' + arr.join('/');
-                        if (!map.hasOwnProperty(item['refModuleId'])) {
-                            map[item['refModuleId']] = [];
-                        }
-                        map[item['refModuleId']].push(item);
-                    });
-                    this.getAllModuleByProId(map);
-                    this.setState({
-                        searchParam: ''
-                    })
-                } else {
-                    Message.error(data.msg)
-                }
+        let url = '/getAllApiById.json?proId=' + this.props.pro._id;
+        fetch(url).then(data => {
+            if (data.success) {
+                let map = {};
+                data.result.map(item => {
+                    item.key = item._id;
+                    let arr = item.url.split('/');
+                    arr.splice(0, 2);
+                    item.url = '/' + arr.join('/');
+                    if (!map.hasOwnProperty(item['refModuleId'])) {
+                        map[item['refModuleId']] = [];
+                    }
+                    map[item['refModuleId']].push(item);
+                });
+                this.getAllModuleByProId(map);
+                this.setState({
+                    searchParam: ''
+                })
+            } else {
+                Message.error(data.msg)
             }
         })
     };
@@ -537,28 +488,24 @@ class ApiManage extends React.Component {
             this.getAllAPIByProId();
             return;
         }
-        $.ajax({
-            url: '/queryByParam.json',
-            data: {
-                proCode: this.props.pro.projectCode,
-                url: e.target.value
-            },
-            method: 'POST',
-            dataType: 'JSON',
-            success: data => {
-                data.result.map(item => {
-                    item.key = item._id;
-                    let arr = item.url.split('/');
-                    arr.splice(0, 2);
-                    item.url = '/' + arr.join('/');
-                });
-                if (data.success) {
-                    this.setState({
-                        apis: data.result
-                    })
-                } else {
-                    Message.error(data.msg)
-                }
+        let url = '/queryByParam.json';
+        let data = {
+            proCode: this.props.pro.projectCode,
+            url: e.target.value
+        };
+        fetch(url, data).then(data => {
+            data.result.map(item => {
+                item.key = item._id;
+                let arr = item.url.split('/');
+                arr.splice(0, 2);
+                item.url = '/' + arr.join('/');
+            });
+            if (data.success) {
+                this.setState({
+                    apis: data.result
+                })
+            } else {
+                Message.error(data.msg)
             }
         })
     };
@@ -593,10 +540,10 @@ class ApiManage extends React.Component {
             return;
         }
         if (bool) {
-            // 校验是否填写完整
             this.saveAPI();
+        } else {
+            this.hideModal();
         }
-        this.hideModal();
     };
 
     // 显示编辑API Modal
@@ -604,7 +551,7 @@ class ApiManage extends React.Component {
         this.showModal();
         let editTableParam, editJson, editTableJson;
         editTableParam = (record.paramTable ? JSON.parse(record.paramTable) : null);
-        editJson = (JF.isString(record.json) ? record.json : (JSON.parse(record.json) instanceof Array ? JF.toJsonObj(JSON.parse(record.json), 1, true) : (JSON.parse(record.json) instanceof Object ? JF.toJsonObj(JSON.parse(record.json), 1, false) : null)));
+        editJson = JF.toJsonObj(JSON.parse(record.json), 4);
         editTableJson = (record.jsonTable ? JSON.parse(record.jsonTable) : null);
         this.setState({
             editModule: record.refModuleId,
@@ -641,10 +588,10 @@ class ApiManage extends React.Component {
             return;
         }
         if (bool) {
-            // 校验是否填写完整
             this.updateAPI();
+        } else {
+            this.hideModal();
         }
-        this.hideModal();
     };
 
     // 清空新增/编辑Modal
@@ -653,7 +600,7 @@ class ApiManage extends React.Component {
             module: this.props.rootId,
             url: '',
             method: 'GET',
-            contentType: '1',
+            contentType: 'multipart/form-data',
             description: '',
             addTableParam: null,
             json: '',
@@ -672,38 +619,6 @@ class ApiManage extends React.Component {
         state[key] = val;
         this.setState(state);
     };
-
-    // setModule = (value) => {
-    //     this.setState({
-    //         module: value
-    //     })
-    // };
-    //
-    // // 设置URL
-    // setURL = (e) => {
-    //     this.setState({
-    //         url: e.target.value
-    //     })
-    // };
-    //
-    // // 设置接口描述
-    // setDesc = (e) => {
-    //     this.setState({
-    //         description: e.target.value
-    //     })
-    // };
-    //
-    // // 设置请求类型
-    // setMethod = (value) => {
-    //     if (value === 'POST')
-    //         this.setState({
-    //             method: value
-    //         });
-    //     else
-    //         this.setState({
-    //             method: value
-    //         })
-    // };
 
     // 设置JSON返回
     setJSON = (e) => {
@@ -751,30 +666,15 @@ class ApiManage extends React.Component {
                 });
             }
         } else {
-            let {isJSON, errName, errMsg, errStr} = JF.isJSON(data);
-            if (!isJSON) {
-                Notification.error({
-                    message: errName,
-                    description: (<div>
-                        <p>{errMsg}.</p>
-                        <br/>
-                        {
-                            errStr ? (<div><p>错误描述:</p><p>{errStr}</p></div>) : ''
-                        }
-                    </div>),
-                });
+            result = JF.diffInputType(data, 'json');
+            if (!result) {
+                Message.error('解析失败 请校验输入格式是否正确');
                 return;
+            }
+            if (type === 'add' && !bool) {
+                table = JF.updateJsonToTable(result, this.state.addTableJson)
             } else {
-                result = JF.diffInputType(data);
-                if (!result) {
-                    Message.error('解析失败 请校验输入格式是否正确');
-                    return;
-                }
-                if (type === 'add' && !bool) {
-                    table = JF.updateJsonToTable(result, this.state.addTableJson)
-                } else {
-                    table = JF.updateJsonToTable(result, this.state.editTableJson)
-                }
+                table = JF.updateJsonToTable(result, this.state.editTableJson)
             }
         }
         switch (type) {
@@ -855,18 +755,6 @@ class ApiManage extends React.Component {
         visible[type] = false;
         this.setState(visible);
     };
-
-    // showDocument = () => {
-    //     this.setState({
-    //         documentVisible: true
-    //     })
-    // };
-    //
-    // closeDocument = () => {
-    //     this.setState({
-    //         documentVisible: false
-    //     })
-    // };
 
     showRollBack = (record) => {
         this.getHisById(record);
@@ -1010,11 +898,13 @@ class ApiManage extends React.Component {
                                 <Tabs style={{marginTop: 9}} activeKey={this.state.addActive}
                                       onChange={(k) => this.onTabChange('add', k)}>
                                     <TabPane tab="输入参数" key="param">
-                                        <ParamTable key="addParam" title="参数配置表" dataSource={this.state.addTableParam}
+                                        <ParamTable type="param" key="addParam" title="参数配置表"
+                                                    dataSource={this.state.addTableParam}
                                                     onOk={(value) => this.onOk(value, '', 'addTableParam')}/>
                                     </TabPane>
                                     <TabPane tab="输出参数" key="json">
-                                        <ParamTable key="addJson" title="Json配置表" dataSource={this.state.addTableJson}
+                                        <ParamTable type="json" key="addJson" title="Json配置表"
+                                                    dataSource={this.state.addTableJson}
                                                     onOk={(value) => this.onOk(value, 'json', 'addTableJson')}
                                                     toString={() => this.stringifyJSON('add', this.state.json)}
                                                     format={() => this.formatAndCheckJSON('add', this.state.json, true)}
@@ -1051,6 +941,9 @@ class ApiManage extends React.Component {
                                                         onChange={(val) => this.setSelect('method', val)}>
                                                     <Option value="GET">GET</Option>
                                                     <Option value="POST">POST</Option>
+                                                    <Option value="PUT">PUT</Option>
+                                                    <Option value="PATCH">PATCH</Option>
+                                                    <Option value="DELETE">DELETE</Option>
                                                 </Select>
                                             </div>
                                         </div>
@@ -1059,9 +952,9 @@ class ApiManage extends React.Component {
                                             <div>
                                                 <Select style={{width: '100%'}} value={this.state.contentType}
                                                         onChange={(val) => this.setSelect('contentType', val)}>
-                                                    <Option value="1">multipart/form-data</Option>
-                                                    <Option value="2">application/x-www-form-urlencoded</Option>
-                                                    <Option value="3">application/json</Option>
+                                                    <Option value="multipart/form-data">multipart/form-data</Option>
+                                                    <Option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</Option>
+                                                    <Option value="application/json">application/json</Option>
                                                 </Select>
                                             </div>
                                         </div>
@@ -1094,11 +987,13 @@ class ApiManage extends React.Component {
                                 <Tabs style={{marginTop: 20}} activeKey={this.state.editActive}
                                       onChange={(k) => this.onTabChange('edit', k)}>
                                     <TabPane tab="输入参数" key="editParam">
-                                        <ParamTable key="editParam" title="参数配置表" dataSource={this.state.editTableParam}
+                                        <ParamTable type="param" key="editParam" title="参数配置表"
+                                                    dataSource={this.state.editTableParam}
                                                     onOk={(value) => this.onOk(value, '', 'editTableParam')}/>
                                     </TabPane>
                                     <TabPane tab="输出参数" key="editJson">
-                                        <ParamTable key="editJson" title="Json配置表" dataSource={this.state.editTableJson}
+                                        <ParamTable type="json" key="editJson" title="Json配置表"
+                                                    dataSource={this.state.editTableJson}
                                                     onOk={(value) => this.onOk(value, 'editJson', 'editTableJson')}
                                                     toString={() => this.stringifyJSON('edit', this.state.editJson)}
                                                     format={() => this.formatAndCheckJSON('edit', this.state.editJson, true)}
@@ -1134,6 +1029,9 @@ class ApiManage extends React.Component {
                                                         onChange={(val) => this.setSelect('editMethod', val)}>
                                                     <Option value="GET">GET</Option>
                                                     <Option value="POST">POST</Option>
+                                                    <Option value="PUT">PUT</Option>
+                                                    <Option value="PATCH">PATCH</Option>
+                                                    <Option value="DELETE">DELETE</Option>
                                                 </Select>
                                             </div>
                                         </div>
@@ -1142,9 +1040,9 @@ class ApiManage extends React.Component {
                                             <div>
                                                 <Select style={{width: '100%'}} value={this.state.editContentType}
                                                         onChange={(val) => this.setSelect('editContentType', val)}>
-                                                    <Option value="1">multipart/form-data</Option>
-                                                    <Option value="2">application/x-www-form-urlencoded</Option>
-                                                    <Option value="3">application/json</Option>
+                                                    <Option value="multipart/form-data">multipart/form-data</Option>
+                                                    <Option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</Option>
+                                                    <Option value="application/json">application/json</Option>
                                                 </Select>
                                             </div>
                                         </div>
@@ -1186,12 +1084,6 @@ class ApiManage extends React.Component {
                         <span className="header-btn" onClick={this.showEditProject}>
                             <Icon type="setting"/>接口导入
                         </span>
-                        {/*<span className="header-btn" style={{marginLeft: 12}} onClick={this.showRollBack}>*/}
-                        {/*<Icon type="rocket"/>历史记录*/}
-                        {/*</span>*/}
-                        {/*<span className="header-btn" style={{marginLeft: 12}} onClick={this.showDocument}>*/}
-                        {/*<Icon type="info-circle-o"/>使用说明*/}
-                        {/*</span>*/}
                     </div>
                 </div>
                 <Table
@@ -1216,16 +1108,6 @@ class ApiManage extends React.Component {
                         />
                     </div>
                 </Modal>
-                {/*<Modal*/}
-                {/*visible={this.state.documentVisible}*/}
-                {/*title="使用说明"*/}
-                {/*maskClosable={false}*/}
-                {/*onOk={this.closeDocument}*/}
-                {/*onCancel={this.closeDocument}>*/}
-                {/*<div>*/}
-                {/*敬请期待*/}
-                {/*</div>*/}
-                {/*</Modal>*/}
                 <Modal
                     visible={this.state.projectEditVisible}
                     title="接口导入"

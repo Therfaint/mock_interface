@@ -2,6 +2,7 @@
  * Created by therfaint- on 01/12/2017.
  */
 import React from 'react';
+import Icon from 'antd/lib/icon';
 
 class DragPanel extends React.Component {
 
@@ -146,11 +147,44 @@ class DragPanel extends React.Component {
                         return (<div key={index} data-index={item.index}
                                      className={item.type === 'ph' ? `panel-tab placeholder` : `panel-tab`}
                                      draggable="true">
-                            <span>{item.url}</span>
-                            <span>200 OK</span>
-                            <span>{item.duration}ms</span>
-                            <span>12Pass 1Fail</span>
-                            <span>i</span>
+                            <div className="tab-item-left">
+                                <div>{item.url}</div>
+                                <div>
+                                    {/*样式 周末调整一下*/}
+                                    {
+                                        item.hasOwnProperty('passRate') && item.hasOwnProperty('failRate') ?
+                                            (
+                                                <span style={{width: 150, display: 'inline-block',height: 5}}>
+                                                    <span style={{backgroundColor: 'green', width: item.passRate + '%', display: 'inline-block'}}></span>
+                                                    <span style={{backgroundColor: 'red', width: item.failRate + '%', display: 'inline-block'}}></span>
+                                                </span>
+                                            ) : null
+                                    }
+                                </div>
+                                <div>
+                                    {
+                                        item.hasOwnProperty('totalCount') ? `${item.totalCount.pass} passed    ${item.totalCount.fail} failed` : null
+                                    }
+                                </div>
+                            </div>
+                            <div className="tab-item-right">
+                                <span>
+                                    {
+                                        item.hasOwnProperty('status') && item.status === 200 ? item.status : (item.status === 302 ? item.status : (item.status === 500 ? item.status : null))
+                                    }
+                                </span>
+                                    <span>
+                                    {
+                                        item.hasOwnProperty('duration') ? item.duration : null
+                                    }
+                                </span>
+
+                                    <span>
+                                    {
+                                        item.hasOwnProperty('testResult') ? <Icon type="info-circle-o" /> : null
+                                    }
+                                </span>
+                            </div>
                         </div>)
                     })
                 }

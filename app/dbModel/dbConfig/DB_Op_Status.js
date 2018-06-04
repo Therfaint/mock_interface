@@ -1,7 +1,7 @@
 /**
  * Created by therfaint- on 02/08/2017.
  */
-module.exports = {
+export default {
     // 成功
     success: {
         code: 200
@@ -10,4 +10,4 @@ module.exports = {
     fail: {
         code: 500
     }
-}
+};

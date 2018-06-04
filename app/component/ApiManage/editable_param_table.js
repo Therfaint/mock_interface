@@ -7,13 +7,15 @@ import Icon from 'antd/lib/icon';
 import Table from 'antd/lib/table';
 import Cascader from 'antd/lib/cascader';
 import Button from 'antd/lib/button';
-import Modal from 'antd/lib/modal';
+import AutoComplete from 'antd/lib/auto-complete';
 import Notification from 'antd/lib/notification';
 import moment from 'moment';
 import 'moment/locale/zh-cn';
 moment.locale('zh-cn');
 
 import EditableCell from './editable_cell';
+
+const Opt = AutoComplete.Option;
 
 Message.config({
     duration: 2,
@@ -40,146 +42,59 @@ const inputOptions = [{
     label: 'Array'
 }];
 
+const strMockOpts = [
+    <Opt key="@string()">@string(len)</Opt>,
+    <Opt key="@date('yyyy-MM-dd')">@date('yyyy-MM-dd')</Opt>,
+    <Opt key="@datetime('yyyy-MM-dd HH:mm:ss')">@datetime("yyyy-MM-dd HH:mm:ss")</Opt>,
+    <Opt key="@now('yyyy-MM-dd HH:mm:ss')">@now('yyyy-MM-dd HH:mm:ss')</Opt>,
+    <Opt key="@image( size?, background?, foreground?, format?, text? )">@image( size, background, foreground, format,
+        text )</Opt>,
+    <Opt key="@color()">@color()</Opt>,
+    <Opt key="@rgba()">@rgba()</Opt>,
+    <Opt key="@paragraph(len)">@paragraph(len)</Opt>,
+    <Opt key="@sentence(len)">@sentence(len)</Opt>,
+    <Opt key="@cparagraph(len)">@cparagraph(len)</Opt>,
+    <Opt key="@csentence(len)">@csentence(len)</Opt>,
+    <Opt key="@name()">@name()</Opt>,
+    <Opt key="@cname()">@cname()</Opt>,
+    <Opt key="@url()">@url()</Opt>,
+    <Opt key="@protocol()">@protocol()</Opt>,
+    <Opt key="@email()">@email()</Opt>,
+    <Opt key="@ip()">@ip()</Opt>,
+    <Opt key="@region()">@region()</Opt>,
+    <Opt key="@province()">@province()</Opt>,
+    <Opt key="@city()">@city()</Opt>,
+    <Opt key="@county()">@county()</Opt>,
+    <Opt key="@guid()">@guid()</Opt>
+];
+
+const boolMockOpts = [
+    <Opt key="@boolean()">@boolean</Opt>,
+    <Opt key="true">true</Opt>,
+    <Opt key="false">false</Opt>
+];
+const numMockOpts = [
+    <Opt key="@integer()">@integer</Opt>,
+    <Opt key="@float()">@float</Opt>,
+    <Opt key="@integer( min, max )">@integer( min, max )</Opt>,
+    <Opt key="@float( min, max )">@float( min, max )</Opt>,
+];
+
 const retOptions = [{
     value: 'string',
-    label: 'String',
-    children: [{
-        value: '@id',
-        label: 'Id'
-
-    }, {
-        value: '@name',
-        label: 'Name'
-
-    }, {
-        value: '@sex',
-        label: 'Sex'
-
-    }, {
-        value: '@url',
-        label: 'Url'
-
-    }, {
-        value: '@email',
-        label: 'E-mail'
-
-    }, {
-        value: '@address',
-        label: 'Address'
-
-    }, {
-        value: '@ip',
-        label: 'Ip'
-
-    }, {
-        value: '@rate',
-        label: 'Rate'
-
-    }, {
-        value: '@date',
-        label: 'Date'
-
-    }, {
-        value: '@datetime',
-        label: 'DateTime'
-
-    }, {
-        value: '@version',
-        label: 'Version'
-
-    }],
+    label: 'String'
 }, {
     value: 'number',
-    label: 'Number',
-    children: [{
-        value: '10',
-        label: '10'
-    }, {
-        value: '20',
-        label: '20'
-    }, {
-        value: '50',
-        label: '50'
-    }, {
-        value: '100',
-        label: '100'
-    }, {
-        value: '200',
-        label: '200'
-    }, {
-        value: '0-1',
-        label: 'INT[0, 1]'
-    }, {
-        value: '.0-1',
-        label: 'FLOAT[0, 1]'
-    },
-        //     {
-        //     value: '0-10',
-        //     label: 'INT[0, 10]'
-        // }, {
-        //     value: '.0-10',
-        //     label: 'FLOAT[0, 10]'
-        // }, {
-        //     value: '0-100',
-        //     label: 'INT[0, 100]'
-        // }, {
-        //     value: '.0-100',
-        //     label: 'FLOAT[0, 100]'
-        // },
-        {
-            value: '0-1000',
-            label: '[0, 1,000]'
-        }, {
-            value: '0-10000',
-            label: '[0, 10,000]'
-        }, {
-            value: '10000-1000000',
-            label: '[10,000, 1,000,000]'
-        }],
+    label: 'Number'
 }, {
     value: 'boolean',
-    label: 'Boolean',
-    children: [{
-        value: true,
-        label: 'True'
-
-    }, {
-        value: false,
-        label: 'False'
-
-    }],
+    label: 'Boolean'
 }, {
     value: 'object',
     label: 'Object'
 }, {
     value: 'array',
-    label: 'Array',
-    children: [{
-        value: '2',
-        label: 'Array(2)'
-    }, {
-        value: '3',
-        label: 'Array(3)'
-    }, {
-        value: '5',
-        label: 'Array(5)'
-    }, {
-        value: '10',
-        label: 'Array(10)'
-
-    }, {
-        value: '20',
-        label: 'Array(20)'
-
-    }, {
-        value: '30',
-        label: 'Array(30)'
-
-    }, {
-        value: '50',
-        label: 'Array(50)'
-
-    }]
+    label: 'Array'
 }];
 
 class ParamDefine extends React.Component {
@@ -188,12 +103,13 @@ class ParamDefine extends React.Component {
         super(props);
         this.state = {
             dataSource: [{
-                key: '1',
+                key: '0',
                 paramName: '',
-                paramType: [],
+                paramType: ['string'],
+                // usrDefine: this.props.type === 'json' ? '@string()' : '',
                 usrDefine: '',
                 illustration: '',
-                path: '1'
+                path: '0'
             }],
             count: 998,
             option: [],
@@ -207,7 +123,7 @@ class ParamDefine extends React.Component {
             if (item.hasOwnProperty('children')) {
                 if (item['children'].length === 0) {
                     delete item['children'];
-                    item['paramType'] = [];
+                    item['paramType'] = ['string'];
                 } else {
                     this.dataSourceClean(item['children']);
                 }
@@ -218,28 +134,31 @@ class ParamDefine extends React.Component {
 
     onCellChange = (record, key) => {
         return (value) => {
-            if (value.toString().indexOf('array') !== -1 && key === 'usrDefine') {
-                this.handleChange(['array'], record, false);
-            }
+            // 自定义数组长度
             let indexes, dataSource = [...this.state.dataSource];
             let curIndex, data = dataSource;
             indexes = record.path.split("/");
+            // 根据路径进行第i层层次遍历
             for (let i = 0; i < indexes.length; i++) {
                 data.map((item, index) => {
                     if (item['key'] === indexes[i]) {
                         curIndex = index;
                     }
                 });
+                // 最后一层遍历
                 if (i + 1 === indexes.length) {
                     data[curIndex][key] = value;
                     this.setState({
                         dataSource
                     })
                 } else {
+                    // 获取下一层结构
                     data = data[curIndex]['children'];
                 }
             }
-            this.props.onOk(this.state.dataSource);
+            if(key !== 'illustration'){
+                this.props.onOk(this.state.dataSource);
+            }
         };
     };
 
@@ -247,17 +166,20 @@ class ParamDefine extends React.Component {
         let indexes, dataSource = [...this.state.dataSource];
         let curIndex, data = dataSource;
         indexes = record.path.split("/");
+        //单层遍历删除
         if (indexes.length === 1) {
             if (dataSource.length === 1)
                 return;
             dataSource.map((item, index) => {
                 if (item['key'] === indexes[0]) {
                     dataSource.splice(index, 1);
+                    // this.setToPrePos(dataSource.slice(index, dataSource.length),index);
                 }
             });
             this.props.onOk(dataSource);
             this.setState({dataSource})
         } else {
+            // 根据路径进行第i层层次遍历
             for (let i = 0; i < indexes.length; i++) {
                 data.map((item, index) => {
                     if (item['key'] === indexes[i]) {
@@ -268,7 +190,8 @@ class ParamDefine extends React.Component {
                     data = data[curIndex]['children'];
                     data.map((item, index) => {
                         if (item['key'] === indexes[i + 1]) {
-                            data.splice(index, 1)
+                            data.splice(index, 1);
+                            // this.setToPrePos(data.slice(index, data.length),index);
                         }
                     });
                     this.props.onOk(this.dataSourceClean(dataSource));
@@ -298,25 +221,43 @@ class ParamDefine extends React.Component {
                     let paramName;
                     if (value[0] === 'array') {
                         paramName = 'THIS_iS_ARRAY_TYPE';
+                        data[curIndex]['usrDefine'] = this.props.type === 'json' ? 3 : ''; // 设置数组下标默认值
+                    } else {
+                        paramName = '';
+                        data[curIndex]['usrDefine'] = ''; // 设置对象默认值为空
                     }
-                    if (!data[curIndex].hasOwnProperty('children')) {
+                    if (!data[curIndex].hasOwnProperty('children') || !data[curIndex].hasOwnProperty('children').length) {
                         data[curIndex]['children'] = [];
                         data[curIndex]['children'].push({
                             key: String(this.state.count),
                             paramName,
-                            paramType: [],
+                            paramType: ['string'],
+                            // usrDefine: this.props.type === 'json' ? '@string()' : '',
                             usrDefine: '',
                             illustration: '',
                             path: record.path + '/' + this.state.count
                         });
                     }
                 } else {
+                    // if (this.props.type === 'json') {
+                    //     switch (data[curIndex]['paramType'][0]) {
+                    //         case 'string':
+                    //             data[curIndex]['usrDefine'] = '@string()';
+                    //             break;
+                    //         case 'number':
+                    //             data[curIndex]['usrDefine'] = '@integer()';
+                    //             break;
+                    //         case 'boolean':
+                    //             data[curIndex]['usrDefine'] = '@boolean()';
+                    //             break;
+                    //     }
+                    // }
                     delete data[curIndex]['children'];
                 }
                 this.setState({
                     dataSource,
                     count: this.state.count + 1
-                })
+                });
             } else {
                 data = data[curIndex]['children'];
             }
@@ -346,7 +287,8 @@ class ParamDefine extends React.Component {
             const newParam = {
                 key: String(this.state.count),
                 paramName: '',
-                paramType: [],
+                paramType: ['string'],
+                // usrDefine: this.props.type === 'json' ? '@string()' : '',
                 usrDefine: '',
                 illustration: '',
                 path: path + '/' + this.state.count
@@ -360,7 +302,8 @@ class ParamDefine extends React.Component {
             const newParam = {
                 key: String(this.state.count),
                 paramName: '',
-                paramType: [],
+                paramType: ['string'],
+                // usrDefine: this.props.type === 'json' ? '@string()' : '',
                 usrDefine: '',
                 illustration: '',
                 path: String(this.state.count)
@@ -398,10 +341,10 @@ class ParamDefine extends React.Component {
         let props = nextProps ? nextProps : this.props;
         let state = {};
         if (props.title.indexOf('参数')) {
-            state['usrDefine'] = '自定义返回值';
+            state['usrDefine'] = '自定义数组长度/返回值';
             state['option'] = retOptions;
         } else {
-            state['usrDefine'] = '测试参数数据集合(非必填项)';
+            state['usrDefine'] = '输入参数';
             state['option'] = inputOptions;
         }
         if (props.dataSource && props.dataSource.length) {
@@ -410,12 +353,13 @@ class ParamDefine extends React.Component {
 
         } else {
             state['dataSource'] = [{
-                key: '1',
+                key: '0',
                 paramName: '',
-                paramType: [],
+                paramType: ['string'],
+                // usrDefine: this.props.type === 'json' ? '@string()' : '',
                 usrDefine: '',
                 illustration: '',
-                path: '1'
+                path: '0'
             }]
         }
         this.setState(state);
@@ -429,6 +373,10 @@ class ParamDefine extends React.Component {
         this.propsJudge();
     }
 
+    onSelect = (record, val) => {
+        this.onCellChange(record, 'usrDefine')(val);
+    };
+
     render() {
 
         let columns = [{
@@ -437,6 +385,7 @@ class ParamDefine extends React.Component {
             dataIndex: 'paramName',
             render: (text, record, index) => (
                 <EditableCell
+                    style={{width: 120}}
                     key="paramName"
                     value={record.paramName}
                     onChange={this.onCellChange(record, 'paramName')}
@@ -450,10 +399,9 @@ class ParamDefine extends React.Component {
                 // 类型选择下拉
                 <Cascader
                     placeholder="请选择"
-                    style={{width: 150}}
-                    value={record.paramType}
+                    style={{width: 120}}
+                    value={record.paramType.length ? record.paramType : ['string']}
                     options={this.state.option}
-                    expandTrigger="hover"
                     displayRender={this.displayRender}
                     onChange={(value) => this.handleChange(value, record)}
                 />
@@ -462,19 +410,71 @@ class ParamDefine extends React.Component {
             title: this.state.usrDefine ? this.state.usrDefine : '',
             key: 'usrDefine',
             dataIndex: 'usrDefine',
-            render: (text, record, index) => (
-                <EditableCell
-                    key="usrDefine"
-                    value={record.usrDefine}
-                    onChange={this.onCellChange(record, 'usrDefine')}
-                />
-            )
+            render: (text, record, index) => {
+                let opt;
+                switch (record.paramType[0]) {
+                    case 'string':
+                        opt = strMockOpts;
+                        break;
+                    case 'number':
+                        opt = numMockOpts;
+                        break;
+                    case 'boolean':
+                        opt = boolMockOpts;
+                        break;
+                }
+                if (this.state.usrDefine === '输入参数') {
+                    return (
+                        <EditableCell
+                            style={{width: 120}}
+                            key="usrDefine"
+                            value={record.usrDefine}
+                            onChange={this.onCellChange(record, 'usrDefine')}
+                        />
+                    )
+                } else {
+                    if (record.paramType[0] === 'array') {
+                        return (
+                            <EditableCell
+                                style={{width: 200}}
+                                key="usrDefine"
+                                value={record.usrDefine}
+                                onChange={this.onCellChange(record, 'usrDefine')}
+                            />
+                        )
+                    } else if (record.paramType[0] === 'object') {
+                        return (
+                            <EditableCell
+                                disabled
+                                style={{width: 200}}
+                                key="usrDefine"
+                                value={record.usrDefine}
+                                onChange={this.onCellChange(record, 'usrDefine')}
+                            />
+                        )
+                    } else {
+                        return (
+                            <AutoComplete
+                                onSearch={this.onSelect.bind(this, record)}
+                                onSelect={this.onSelect.bind(this, record)}
+                                value={String(record.usrDefine)}
+                                style={{width: 200}}
+                                allowClear={true}
+                                filterOption={(inputValue, option) => String(option.props.children).indexOf(inputValue) !== -1}
+                            >
+                                {opt}
+                            </AutoComplete>
+                        )
+                    }
+                }
+            }
         }, {
             title: '说明',
             key: 'illustration',
             dataIndex: 'illustration',
             render: (text, record, index) => (
                 <EditableCell
+                    style={{width: 150}}
                     key="illustration"
                     value={record.illustration}
                     onChange={this.onCellChange(record, 'illustration')}

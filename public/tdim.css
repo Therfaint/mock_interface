@@ -79,6 +79,10 @@ body {
     color: #108ee9;
 }
 
+.table-header td {
+    background: #f0f0f0;
+}
+
 .wiki-doc table {
     display: table;
     border-collapse: collapse;
@@ -119,6 +123,10 @@ body {
     position: relative;
     padding: 16px 0 10px;
     border-bottom: 1px dashed #ccc;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .submit-btn:after {
@@ -162,20 +170,8 @@ body {
 }
 
 .nav_interface {
-    padding-left: 20px;
+    padding-left: 16px;
     display: inline-block;
-}
-
-.nav_interface:before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: black;
-    position: absolute;
-    left: 0;
-    top: 9px;
-    z-index: 666;
 }
 
 .search-fixed-header {
@@ -335,9 +331,6 @@ body {
     z-index: 998;
     background: #fff;
     border-bottom: 1px solid #ebebeb;
-    /*position: fixed;*/
-    /*left: 0;*/
-    /*right: 0;*/
 }
 
 .wiki-doc-content {
@@ -397,12 +390,25 @@ body {
     padding-left: 120px;
 }
 
+.nav_interface[class~='prefix']:before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: black;
+    position: absolute;
+    left: 0;
+    top: 9px;
+    z-index: 666;
+}
+
 .catalog-1 {
 
 }
 
 .catalog-2 {
     padding-left: 40px;
+    display: none;
 }
 
 .catalog-2:before {
@@ -415,13 +421,14 @@ body {
     right: 0;
     top: 50%;
     margin-top: -50px;
-    /*width: 40px;*/
-    /*height: 40px;*/
-    /*border-radius: 50%;*/
 }
 
 .back-top {
-
+    -webkit-transition: opacity 0.3s;
+    -moz-transition: opacity 0.3s;
+    -ms-transition: opacity 0.3s;
+    -o-transition: opacity 0.3s;
+    transition: opacity 0.3s;
 }
 
 .back-home {
@@ -614,6 +621,7 @@ body {
 }
 
 .panel-tab {
+    position: relative;
     overflow: hidden;
     float: left;
     width: 48%;
@@ -625,6 +633,18 @@ body {
     justify-content: center;
     margin-right: 2%;
     transition: all 0.6s ease-in;
+}
+
+.tab-item-left{
+    display: inline-block;
+    width: 75%;
+    background-color: red;
+}
+
+.tab-item-right{
+    display: inline-block;
+    width: 25%;
+    background-color: yellow;
 }
 
 .panel-tab:nth-child(2n) {
@@ -818,58 +838,3 @@ body {
     display: none;
     z-index: 9;
 }
-
-/* test */
-/** {*/
-/*margin: 0;*/
-/*padding: 0;*/
-/*}*/
-
-/*.clear {*/
-/*clear: both;*/
-/*}*/
-
-/*.wrap {*/
-/*width: 380px;*/
-/*height: auto;*/
-/*zoom: 1;*/
-/*overflow: hidden;*/
-/*border: 1px solid #8E8E8E;*/
-/*margin-top: 100px;*/
-/*margin-left: 400px;*/
-/*padding-bottom: 20px;*/
-/*position: relative;*/
-/*}*/
-
-/*.menu {*/
-/*width: 70px;*/
-/*height: 30px;*/
-/*background-color: cornflowerblue;*/
-/*color: #FFFFFF;*/
-/*font-size: 16px;*/
-/*text-align: center;*/
-/*line-height: 30px;*/
-/*float: left;*/
-/*margin-left: 20px;*/
-/*margin-top: 10px;*/
-/*}*/
-
-/*.active {*/
-/*height: 28px;*/
-/*width: 68px;*/
-/*border: 1px dashed #8E8E8E;*/
-/*float: left;*/
-/*margin-left: 20px;*/
-/*margin-top: 10px;*/
-/*}*/
-
-/*.onclick {*/
-/*transform: scale(1.2);*/
-/*position: absolute;*/
-/*background-color: cornflowerblue;*/
-/*line-height: 30px;*/
-/*height: 30px;*/
-/*width: 70px;*/
-/*text-align: center;*/
-/*color: #FFFFFF;*/
-/*}*/

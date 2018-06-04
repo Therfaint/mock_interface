@@ -4,4 +4,4 @@
 
 2.npm start
 
-#暂不支持输入的mock,可能会考虑迭代
+3.pm2部署方案 pm2 start process.json

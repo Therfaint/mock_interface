@@ -1,48 +1,33 @@
 /**
  * Created by therfaint- on 13/11/2017.
  */
-/**
- * Created by therfaint- on 01/08/2017.
- */
-let mongoose = require('mongoose');
-let status = require('../util/DB_Op_Status');
+import mongoose from 'mongoose';
+import status from './dbConfig/DB_Op_Status';
+import options from './dbConfig/commonCfg';
 
 mongoose.Promise = global.Promise;
 
-const options = {
-    server: {
-        auto_reconnect: true,
-        poolSize: 10
-    }
-};
-
-module.exports = class voteDbUtils{
+export default class voteDbUtils{
 
     constructor(){
 
         this.conn = mongoose.createConnection('mongodb://127.0.0.1:27017/vote', options);
 
         this.conn.on('error', function(error){
-            console.log('数据库连接失败!\n' + error);
+            console.log('Vote DataBase Connect Failed !!\n' + error);
         });
 
         this.conn.once('open',function(error){
             if(error){
-                console.log('数据库连接失败!\n' + error);
+                console.log('Vote DataBase Connect Failed !!\n' + error);
             }
-            console.log('数据库连接成功...');
+            console.log('Vote DataBase Connect Success ...');
         });
-
-        // todo: 是否新增ref或者进行多表查询
 
         this.voteSchema = new mongoose.Schema({
             userName: {
-                type: String,
-                // required: true
+                type: String
             },
-            // userId: {
-            //     type: String
-            // },
             select: {
                 type: Array,
                 required: true
@@ -52,8 +37,7 @@ module.exports = class voteDbUtils{
                 required: true
             },
             description: {
-                type: String,
-                // required: true
+                type: String
             },
             voteTime: {
                 type: String,

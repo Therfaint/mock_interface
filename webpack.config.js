@@ -1,13 +1,25 @@
 /**
  * Created by therfaint- on 31/07/2017.
  */
-var path = require('path');
-var webpack = require('webpack');
-var NODE_MODULES_PATH = path.resolve(__dirname, './node_modules');
+import path from 'path';
+import webpack from 'webpack';
+import fs from 'fs';
+import uglifycss from 'uglifycss';
+
+const NODE_MODULES_PATH = path.resolve(__dirname, './node_modules');
+
+const writeFile = (file, contents) => new Promise((resolve, reject) => {
+    fs.writeFile(file, contents, 'utf8', err => (err ? reject(err) : resolve()));
+});
+
+writeFile(path.resolve(__dirname, './public/tdim.min.css'), uglifycss.processFiles(
+    [path.resolve(__dirname, './public/tdim.css')],
+    {maxLineLen: 0, expandVars: true}
+)).then(res => console.log('css压缩成功'))
 
 module.exports = {
 
-    entry: path.resolve(__dirname, './app/main.js'),
+    entry: path.resolve(__dirname, './app/index.js'),
 
     output: {
         path: path.resolve(__dirname, './build'),
@@ -27,33 +39,23 @@ module.exports = {
             {
                 test: /\.(js|jsx)$/,
                 loader: 'babel-loader',
-                exclude: NODE_MODULES_PATH,
-                // query: {
-                //     presets: ['es2015', 'stage-1']
-                // }
+                exclude: NODE_MODULES_PATH
             },
         ]
     },
 
     plugins: [
         new webpack.HotModuleReplacementPlugin(),
-        // new webpack.DefinePlugin({
-        //     'process.env': { NODE_ENV: JSON.stringify(process.env.NODE_ENV) },
-        //     __CLIENT__: JSON.stringify(true),
-        //     __SERVER__: JSON.stringify(false),
-        // }),
-        // // Minimize all JavaScript output of chunks
-        // // https://github.com/mishoo/UglifyJS2#compressor-options
-        // new webpack.optimize.UglifyJsPlugin({
-        //     minimize: true,
-        //     compress: {
-        //         warnings: false,
-        //         drop_console: true,
-        //         screw_ie8: true
-        //     },
-        //     output: {
-        //         comments: false
-        //     }
-        // }),
+        new webpack.optimize.UglifyJsPlugin({
+            minimize: true,
+            compress: {
+                warnings: false,
+                drop_console: true,
+                screw_ie8: true
+            },
+            output: {
+                comments: false
+            }
+        })
     ]
-}
+};

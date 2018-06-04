@@ -1,37 +1,36 @@
 /**
  * Created by therfaint- on 01/08/2017.
  */
-const fetch = require('node-fetch');
-const formData = require('form-data');
-let express = require('express');
+import fetch from 'node-fetch';
+import formData from 'form-data';
+
+import express from 'express';
+import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
+
+import API from './app/dbModel/api_db_op';
+import Module from './app/dbModel/module_db_op';
+import Project from './app/dbModel/project_db_op';
+import Vote from './app/dbModel/vote_db_op';
+import History from './app/dbModel/operationLog_db_op';
+
+import webpack from 'webpack';
+import webpackHotMiddleWare from 'webpack-hot-middleware';
+import webpackDevMiddleWare from 'webpack-dev-middleware';
+import config from './webpack.config';
+
+let api = new API();
+let mod = new Module();
+let pro = new Project();
+let vote = new Vote();
+let his = new History();
+
 let app = express();
-let bodyParser = require('body-parser');
-let cookieParser = require('cookie-parser');
-let apiHandler = require('./app/dbModel/api_db_op');
-let moduleHandler = require('./app/dbModel/module_db_op');
-let proHandler = require('./app/dbModel/project_db_op');
-let voteHandler = require('./app/dbModel/vote_db_op');
-let opHistoryHandler = require('./app/dbModel/operationLog_db_op');
+const compiler = webpack(config);
 
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
-
-let api = new apiHandler();
-let mod = new moduleHandler();
-let pro = new proHandler();
-let vote = new voteHandler();
-let his = new opHistoryHandler();
-
-// const reqHeaders = [];
-// const contentTypes = ['multipart/form-data', 'application/x-www-form-urlencoded', 'application/json'];
-
-const webpack = require('webpack');
-
-const webpackHotMiddleWare = require('webpack-hot-middleware');
-const webpackDevMiddleWare = require('webpack-dev-middleware');
-const config = require('./webpack.config');
-const compiler = webpack(config);
 app.use(webpackDevMiddleWare(compiler, {noInfo: true}));
 app.use(webpackHotMiddleWare(compiler));
 
@@ -72,15 +71,15 @@ const doPAndC = (arr) => {
 
 const setArrObjMap = (arr, keys) => {
     let a = [];
-    arr.map((item, index) => {
+    arr.map(item => {
         let obj = {};
         if (item.length) {
             for (let i = 0; i < item.length; i++) {
-                obj[keys[i]] = item[i]
+                obj[keys[i]] = item[i];
                 a.push(obj);
             }
         } else {
-            obj[keys[0]] = item[0]
+            obj[keys[0]] = item[0];
             a.push(obj);
         }
     });
@@ -123,8 +122,7 @@ const renderFullPage = () => {
     <html lang="utf-8">
     	<head>
     	<link rel="stylesheet" type="text/css" href="/antd.min.css" />
-    	<link rel="stylesheet" type="text/css" href="/apiManage.css" />
-    	<script src="/jquery-1.11.1.js"></script>
+    	<link rel="stylesheet" type="text/css" href="/tdim.min.css" />
     	</head>
     	<body>
     		<section id="todoapp" class="todoapp"></section>
@@ -249,7 +247,7 @@ app.post('/apiTest', async (req, res) => {
             try {
                 arr.push(await r[x].json());
                 if (x === (l - 1)) {
-                    return res.status(200).send({code: 200, result: arr, params: params[x]});
+                    return res.status(200).send({code: 200, result: arr, params});
                 }
             } catch (e) {
                 res.status(200).send({code: 500, msg: 'invalid cookie'});
@@ -717,7 +715,7 @@ app.post('*', function (req, res) {
                     ret = result[0].json;
                     break;
                 default:
-                    ret = {msg: '该接口信息存在重复!'};
+                    ret = {msg: '该接口信息存在重复!请确认传入参数是否正确'};
                     break;
             }
             res.status(200).send(ret);
@@ -735,8 +733,10 @@ app.get('*', function (req, res) {
         res.status(404).send('Server.js > 404 - Page Not Found');
         return;
     }
+    let url = req.path;// ignore params
+    let query = req.query;
     // decode解决中文乱码问题
-    api.getAPI(decodeURI(req.originalUrl), 'GET', function (status, result) {
+    api.getAPI(decodeURI(url), query, 'GET', function (status, result) {
         if (status.code === 200) {
             let ret;
             switch (result.length) {
@@ -747,7 +747,7 @@ app.get('*', function (req, res) {
                     ret = result[0].json;
                     break;
                 default:
-                    ret = {msg: '该接口信息存在重复!'};
+                    ret = {msg: '该接口信息存在重复!请确认传入参数是否正确'};
                     break;
             }
             res.status(200).send(ret);
@@ -770,6 +770,6 @@ app.use((err, req, res, next) => {
     res.status(500).send("Server error");
 });
 
-app.listen(3001, function () {
-    console.log('Listening on port 3000');
+app.listen(3003, function () {
+    console.log('Listening on port 3003');
 });

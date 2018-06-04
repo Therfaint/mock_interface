@@ -1,35 +1,27 @@
 /**
  * Created by therfaint- on 23/08/2017.
  */
-
-let mongoose = require('mongoose');
-let status = require('../util/DB_Op_Status');
-let apiDbUtil = require('./api_db_op');
+import mongoose from 'mongoose';
+import status from './dbConfig/DB_Op_Status';
+import options from './dbConfig/commonCfg';
 
 mongoose.Promise = global.Promise;
 
-const options = {
-    server: {
-        auto_reconnect: true,
-        poolSize: 10
-    }
-};
-
-module.exports = class proDbUtil{
+export default class proDbUtil{
 
     constructor(){
 
         this.conn = mongoose.createConnection('mongodb://127.0.0.1:27017/project', options);
 
         this.conn.on('error', function(error){
-            console.log('数据库连接失败!\n' + error);
+            console.log('Project DataBase Connect Failed !!\n' + error);
         });
 
         this.conn.on('open',function(error){
             if(error){
-                console.log('数据库连接失败!\n' + error);
+                console.log('Project DataBase Connect Failed !!\n' + error);
             }
-            console.log('数据库连接成功...');
+            console.log('Project DataBase Connect Success ...');
         });
 
         this.proSchema = new mongoose.Schema({
