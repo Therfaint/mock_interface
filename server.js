@@ -19,6 +19,11 @@ import webpackHotMiddleWare from 'webpack-hot-middleware';
 import webpackDevMiddleWare from 'webpack-dev-middleware';
 import config from './webpack.config';
 
+const io = require('socket.io')(8088, {
+    path: '/',
+    serveClient: false
+});
+
 let api = new API();
 let mod = new Module();
 let pro = new Project();
@@ -126,6 +131,7 @@ const renderFullPage = () => {
     	</head>
     	<body>
     		<section id="todoapp" class="todoapp"></section>
+    		<script src="/socket.io.js"></script>
     		<script src="/bundle.js"></script>
     	</body>
     </html>
@@ -170,97 +176,97 @@ app.get('/wiki/pageId=*', function (req, res) {
 
 /* 接口测试 */
 
-app.post('/ping', async (req, res) => {
-    const promises = [];
-    let param = req.body.param;
-    let {params} = formatAllParams(param.params);
-    let opts = {}, headers = {}, body = '';
-    let form = new formData();
-    let url = req.body.host + param.url;
-    if (req.body.cookie) {
-        headers.cookie = req.body.cookie;
-    }
-    // post or get
-    if (param.method === 'POST') {
-        for (let k in params[0]) {
-            form.append(k, params[0][k])
-        }
-        opts.method = 'POST';
-        opts.body = form;
-    } else {
-        for (let k in params[0]) {
-            body += `${k}=${params[0][k]}&`
-        }
-        opts.method = 'GET';
-        url = url + '?' + body.substring(0, body.length - 1);
-    }
-    opts.headers = headers;
-    promises.push(fetch(url, opts));
-
-    Promise.all(promises).then(async r => {
-        try {
-            await r[0].json();
-            res.status(200).send({code: 1});
-        } catch (e) {
-            res.status(200).send({code: 0});
-        }
-    }, reason => {
-        res.status(200).send({code: 0});
-    }).catch(e => {
-        res.status(200).send({code: 0});
-    });
-
-});
-
-app.post('/apiTest', async (req, res) => {
-    const promises = [];
-    let arr = [], param = req.body.param;
-    let {params, length} = formatAllParams(param.params);
-    let l = req.body.length ? req.body.length : length;
-    for (let i = 0; i < l; i++) {
-        let opts = {}, headers = {}, body = '';
-        let form = new formData();
-        let url = req.body.host + param.url;
-        if (req.body.cookie) {
-            headers.cookie = req.body.cookie;
-        }
-        // post or get
-        if (param.method === 'POST') {
-            for (let k in params[i]) {
-                form.append(k, params[i][k])
-            }
-            opts.method = 'POST';
-            opts.body = form;
-        } else {
-            for (let k in params[i]) {
-                body += `${k}=${params[i][k]}&`
-            }
-            opts.method = 'GET';
-            url = url + '?' + body.substring(0, body.length - 1);
-        }
-        opts.headers = headers;
-        promises.push(fetch(url, opts));
-    }
-
-    Promise.all(promises).then(async r => {
-        for (let x = 0; x < r.length; x++) {
-            try {
-                arr.push(await r[x].json());
-                if (x === (l - 1)) {
-                    return res.status(200).send({code: 200, result: arr, params});
-                }
-            } catch (e) {
-                res.status(200).send({code: 500, msg: 'invalid cookie'});
-                break;
-            }
-        }
-    }, reason => {
-        res.status(200).send({code: 500, msg: reason.message});
-    }).catch(e => {
-        res.status(200).send({code: 500, msg: e.message});
-    })
-
-});
+// app.post('/ping', async (req, res) => {
+//     const promises = [];
+//     let param = req.body.param;
+//     let {params} = formatAllParams(param.params);
+//     let opts = {}, headers = {}, body = '';
+//     let form = new formData();
+//     let url = req.body.host + param.url;
+//     if (req.body.cookie) {
+//         headers.cookie = req.body.cookie;
+//     }
+//     // post or get
+//     if (param.method === 'POST') {
+//         for (let k in params[0]) {
+//             form.append(k, params[0][k])
+//         }
+//         opts.method = 'POST';
+//         opts.body = form;
+//     } else {
+//         for (let k in params[0]) {
+//             body += `${k}=${params[0][k]}&`
+//         }
+//         opts.method = 'GET';
+//         url = url + '?' + body.substring(0, body.length - 1);
+//     }
+//     opts.headers = headers;
+//     promises.push(fetch(url, opts));
+//
+//     Promise.all(promises).then(async r => {
+//         try {
+//             await r[0].json();
+//             res.status(200).send({code: 1});
+//         } catch (e) {
+//             res.status(200).send({code: 0});
+//         }
+//     }, reason => {
+//         res.status(200).send({code: 0});
+//     }).catch(e => {
+//         res.status(200).send({code: 0});
+//     });
+//
+// });
+//
+// app.post('/apiTest', async (req, res) => {
+//     const promises = [];
+//     let arr = [], param = req.body.param;
+//     let {params, length} = formatAllParams(param.params);
+//     let l = req.body.length ? req.body.length : length;
+//     for (let i = 0; i < l; i++) {
+//         let opts = {}, headers = {}, body = '';
+//         let form = new formData();
+//         let url = req.body.host + param.url;
+//         if (req.body.cookie) {
+//             headers.cookie = req.body.cookie;
+//         }
+//         // post or get
+//         if (param.method === 'POST') {
+//             for (let k in params[i]) {
+//                 form.append(k, params[i][k])
+//             }
+//             opts.method = 'POST';
+//             opts.body = form;
+//         } else {
+//             for (let k in params[i]) {
+//                 body += `${k}=${params[i][k]}&`
+//             }
+//             opts.method = 'GET';
+//             url = url + '?' + body.substring(0, body.length - 1);
+//         }
+//         opts.headers = headers;
+//         promises.push(fetch(url, opts));
+//     }
+//
+//     Promise.all(promises).then(async r => {
+//         for (let x = 0; x < r.length; x++) {
+//             try {
+//                 arr.push(await r[x].json());
+//                 if (x === (l - 1)) {
+//                     return res.status(200).send({code: 200, result: arr, params});
+//                 }
+//             } catch (e) {
+//                 res.status(200).send({code: 500, msg: 'invalid cookie'});
+//                 break;
+//             }
+//         }
+//     }, reason => {
+//         res.status(200).send({code: 500, msg: reason.message});
+//     }).catch(e => {
+//         res.status(200).send({code: 500, msg: e.message});
+//     })
+//
+// });
 
 /* 历史记录操作 */
 
@@ -417,8 +423,9 @@ app.post('/updateApi.json', function (req, res) {
         // opUser: req.body.opUser,
         api: param
     };
-    api.update(id, param, function (status) {
+    api.update(id, param, function (status, result) {
         if (status.code === 200) {
+            io.sockets.emit('update', JSON.parse(result));
             pro.updateLastUpdateTime(req.body.proId, req.body.lastUpdateTime);
             his.add(hisObj);
             res.status(200).json({
@@ -692,19 +699,7 @@ app.post('/queryByCodeOrName.json', function (req, res) {
 /* 处理外部访问 暴露存储接口 */
 
 app.post('*', function (req, res) {
-    // let param = {};
-    // for (let k in req.body) {
-    //     if (!isNaN(Number(req.body[k]))) {
-    //         param[k] = parseInt(req.body[k]);
-    //     } else if (req.body[k] === 'true') {
-    //         param[k] = true;
-    //     } else if (req.body[k] === 'false') {
-    //         param[k] = false;
-    //     } else {
-    //         param[k] = req.body[k];
-    //     }
-    // }
-    api.getAPI(req.originalUrl, 'POST', function (status, result) {
+    api.getAPI(req.originalUrl, req.body, 'POST', function (status, result) {
         if (status.code === 200) {
             let ret;
             switch (result.length) {
@@ -770,6 +765,11 @@ app.use((err, req, res, next) => {
     res.status(500).send("Server error");
 });
 
-app.listen(3003, function () {
-    console.log('Listening on port 3003');
+app.listen(3000, function () {
+    console.log('Listening on port 3000');
+});
+
+process.on('unhandledRejection', error => {
+    // Will print "unhandledRejection err is not defined"
+    console.log('unhandledRejection', error);
 });

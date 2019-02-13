@@ -37,6 +37,8 @@ Notification.config({
 
 const JF = new JsonFormatter();
 
+let timeout;
+
 class WikiDoc extends React.Component {
 
     constructor(props) {
@@ -422,24 +424,32 @@ class WikiDoc extends React.Component {
         this.setState({pageId});
     };
 
+    nextCall = () => {
+        if (timeout) {
+            clearTimeout(timeout);
+            timeout = null;
+        }
+
+        timeout = setTimeout(this.onScrollCB, 200);
+    };
+
+    onScrollCB = () => {
+        let state = {};
+        if (window.scrollY > this.catalog.offsetTop + this.catalog.clientHeight) {
+            state['scroll'] = true;
+        } else {
+            state['scroll'] = false;
+        }
+        this.setState(state);
+    };
+
     componentDidMount = () => {
         this.refs.modal.style.display = 'none';
         // this.testSingleApi();
         this.getProById();
         this.getAPIsById();
         window.onscroll = (e) => {
-            let state = {};
-            if (window.scrollY > this.offsetTop) {
-
-            } else {
-
-            }
-            if (window.scrollY > this.catalog.offsetTop + this.catalog.clientHeight) {
-                state['scroll'] = true;
-            } else {
-                state['scroll'] = false;
-            }
-            this.setState(state);
+            this.nextCall();
         };
     };
 

@@ -25,10 +25,10 @@ export default class Data_Parser {
      @return {String | null} isArr === false ? 返回执行函数的值 : 不返回
      */
     handleUsrDef = (input, item) => {
-        if(input[0] === '@'){
+        if (input[0] === '@') {
             let reg = new RegExp(/^@.*\(.*\)$/);
             return reg.exec(input) ? Mock.mock(input) || typeof Mock.mock(input) === 'boolean' ? Mock.mock(input) : '' : input;
-        }else{
+        } else {
             if (item['paramType'][0] !== 'array' && item['paramType'][0] !== 'object') {
                 if (input === 'true' || input === 'false') {
                     item['paramType'] = ['boolean'];
@@ -42,6 +42,70 @@ export default class Data_Parser {
                 return input;
             }
         }
+    };
+
+    // 获取说明的映射
+    getIllustrationMap(dataSource, type = 'object') {
+        let outputObj = {};
+        let arrItem;
+        dataSource.map((item) => {
+            if (item.hasOwnProperty('children')) {
+                // 数组+数组
+                if (item['paramType'][0] === 'array' && type === 'array') {
+                    arrItem = this.arrayParser(item['children'], item['usrDefine'], true);
+                    arrItem.__TDIMDESC = item.illustration;
+                    // 数组+对象
+                } else if (item['paramType'][0] === 'object' && type === 'array') {
+                    arrItem = this.objectParser(item['children'], true);
+                    arrItem.__TDIMDESC = item.illustration;
+                    // 对象+数组
+                } else if (item['paramType'][0] === 'array' && type === 'object') {
+                    outputObj[item['paramName']] = this.arrayParser(item['children'], item['usrDefine'], true);
+                    outputObj[item['paramName']].__TDIMDESC = item.illustration;
+                    // 对象+对象
+                } else if (item['paramType'][0] === 'object' && type === 'object') {
+                    outputObj[item['paramName']] = this.getIllustrationMap(item['children']);
+                    outputObj[item['paramName']].__TDIMDESC = item.illustration;
+                }
+            } else {
+                // 最外层递归赋值
+                if (item.hasOwnProperty('usrDefine') && item['usrDefine']) {
+                    if (type === 'array') {
+                        arrItem = item.illustration;
+                    } else {
+                        outputObj[item['paramName']] = item.illustration;
+                    }
+                } else {
+                    switch (item['paramType'][0]) {
+                        case 'string':
+                            if (type === 'array') {
+                                arrItem = item.illustration;
+                            } else {
+                                outputObj[item['paramName']] = item.illustration;
+                            }
+                            break;
+                        case 'number':
+                            if (type === 'array') {
+                                arrItem = item.illustration;
+                            } else {
+                                outputObj[item['paramName']] = item.illustration;
+                            }
+                            break;
+                        case 'boolean':
+                            if (type === 'array') {
+                                arrItem = item.illustration;
+                            } else {
+                                outputObj[item['paramName']] = item.illustration;
+                            }
+                            break;
+                        default:
+                            console.log('Parse Error');
+                            break;
+                    }
+                }
+            }
+        });
+        return arrItem !== undefined ? arrItem : outputObj;
     };
 
     // 通过递归将特定数据结构进行数据的筛选以及随机赋值
@@ -71,31 +135,31 @@ export default class Data_Parser {
             } else {
                 // 最外层递归赋值
                 if (item.hasOwnProperty('usrDefine') && item['usrDefine']) {
-                    if (type === 'array'){
+                    if (type === 'array') {
                         arrItem = this.handleUsrDef(item['usrDefine'], item);
-                    } else{
+                    } else {
                         outputObj[item['paramName']] = this.handleUsrDef(item['usrDefine'], item);
                     }
                 } else {
                     switch (item['paramType'][0]) {
                         case 'string':
-                            if (type === 'array'){
+                            if (type === 'array') {
                                 arrItem = this.stringParser(item['usrDefine']);
-                            } else{
+                            } else {
                                 outputObj[item['paramName']] = this.stringParser(item['usrDefine']);
                             }
                             break;
                         case 'number':
-                            if (type === 'array'){
+                            if (type === 'array') {
                                 arrItem = this.numberParser(item['usrDefine']);
-                            }else{
+                            } else {
                                 outputObj[item['paramName']] = this.numberParser(item['usrDefine']);
                             }
                             break;
                         case 'boolean':
-                            if (type === 'array'){
+                            if (type === 'array') {
                                 arrItem = this.booleanParser(item['usrDefine']);
-                            }else{
+                            } else {
                                 outputObj[item['paramName']] = this.booleanParser(item['usrDefine']);
                             }
                             break;
@@ -145,12 +209,12 @@ export default class Data_Parser {
     };
 
     // 对象分析解释处理器
-    objectParser(value) {
+    objectParser(value, isIllustration) {
         let obj;
         if (value[0].paramName === 'THIS_iS_ARRAY_TYPE' && value[0].paramType[0] === 'object') {
-            obj = this.dataSourceFill(value, 'array');
+            obj = isIllustration ? this.getIllustrationMap(value, 'array') : this.dataSourceFill(value, 'array');
         } else {
-            obj = this.dataSourceFill(value);
+            obj = isIllustration ? this.getIllustrationMap(value) : this.dataSourceFill(value)
         }
         return obj;
     };
@@ -161,42 +225,54 @@ export default class Data_Parser {
      @param {Number | String} [total] 填充数组长度
      @return {Array} [arr] object: 返回{key:val}, array: 返回[val,val,val]
      */
-    arrayParser(value, total) {
-        let arr = [],
-            arrItem;
-        let paramType = this.isPureArray(value); // 数组元素为基础类型则不进行递归提高效率
-        for (let i = 0; i < Number(total); i++) {
+    arrayParser(value, total, isIllustration) {
+
+        const setArrItem = () => {
             switch (paramType) {
                 case 'none':
                     break;
                 case 'array':
-                    arrItem = this.dataSourceFill(value, 'array');
+                    arrItem = isIllustration ? this.getIllustrationMap(value, 'array') : this.dataSourceFill(value, 'array');
                     arr.push(arrItem);
                     break;
                 case 'object':
-                    arr.push(this.objectParser(value));
+                    arr.push(this.objectParser(value, isIllustration));
                     break;
                 default:
                     let item = value[0];
-                    if (item.hasOwnProperty('usrDefine') && item['usrDefine']) {
-                        arr.push(this.handleUsrDef(item['usrDefine'], {paramType: ['arrayItem']}));
+                    if (isIllustration) {
+                        arr.push(item['illustration']);
                     } else {
-                        switch (item['paramType'][0]) {
-                            case 'string':
-                                arr.push(defaultStr);
-                                break;
-                            case 'number':
-                                arr.push(defaultNum);
-                                break;
-                            case 'boolean':
-                                arr.push(defaultBool);
-                                break;
+                        if (item.hasOwnProperty('usrDefine') && item['usrDefine']) {
+                            arr.push(this.handleUsrDef(item['usrDefine'], {paramType: ['arrayItem']}));
+                        } else {
+                            switch (item['paramType'][0]) {
+                                case 'string':
+                                    arr.push(defaultStr);
+                                    break;
+                                case 'number':
+                                    arr.push(defaultNum);
+                                    break;
+                                case 'boolean':
+                                    arr.push(defaultBool);
+                                    break;
+                            }
                         }
                     }
                     break;
             }
+        };
+
+        let arr = [],
+            arrItem;
+        let paramType = this.isPureArray(value); // 数组元素为基础类型则不进行递归提高效率
+        if (isIllustration) {
+            setArrItem();
+        } else {
+            for (let i = 0; i < Number(total); i++) {
+                setArrItem();
+            }
         }
-        // }
         return arr;
     };
 

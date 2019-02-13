@@ -15,14 +15,14 @@ const writeFile = (file, contents) => new Promise((resolve, reject) => {
 writeFile(path.resolve(__dirname, './public/tdim.min.css'), uglifycss.processFiles(
     [path.resolve(__dirname, './public/tdim.css')],
     {maxLineLen: 0, expandVars: true}
-)).then(res => console.log('css压缩成功'))
+)).then(res => console.log('css压缩成功'));
 
 module.exports = {
 
     entry: path.resolve(__dirname, './app/index.js'),
 
     output: {
-        path: path.resolve(__dirname, './build'),
+        path: path.resolve(__dirname, './public'),
         filename: 'bundle.js',
     },
 
@@ -46,16 +46,16 @@ module.exports = {
 
     plugins: [
         new webpack.HotModuleReplacementPlugin(),
-        new webpack.optimize.UglifyJsPlugin({
-            minimize: true,
-            compress: {
-                warnings: false,
-                drop_console: true,
-                screw_ie8: true
-            },
-            output: {
-                comments: false
-            }
-        })
+        // new webpack.optimize.UglifyJsPlugin({
+        //     minimize: true,
+        //     compress: {
+        //         warnings: false,
+        //         drop_console: true,
+        //         screw_ie8: true
+        //     },
+        //     output: {
+        //         comments: false
+        //     }
+        // })
     ]
 };

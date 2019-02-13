@@ -1,5 +1,3 @@
-
-import { copyFile, copyDir} from './lib/fs';
 import Promise from 'bluebird';
 
 const targetPath = '../shield/web/src/main/resources/statics';

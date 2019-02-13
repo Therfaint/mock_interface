@@ -390,6 +390,23 @@ body {
     padding-left: 120px;
 }
 
+.level-8 {
+    padding-left: 140px;
+}
+
+.level-9 {
+    padding-left: 160px;
+}
+
+.level-10 {
+    padding-left: 180px;
+}
+
+
+.level-11 {
+    padding-left: 200px;
+}
+
 .nav_interface[class~='prefix']:before {
     content: '';
     width: 6px;

@@ -1,12 +1,46 @@
 /**
  * Created by therfaint- on 02/08/2017.
  */
+import dataParser from './Data_Parser';
+
+const DP = new dataParser();
 
 class JsonFormatter {
 
     constructor() {
         this.count = 0;
     }
+
+    getPropByKey = (key, obj) => {
+        return obj[key];
+    };
+
+    mapIllustration = (ret, prevTree) => {
+
+        let res;
+
+        if (!prevTree) {
+            return ret;
+        }
+
+        res = ret.map(item => {
+            if (item.hasOwnProperty('children')) {
+                item.illustration = item.paramName === 'THIS_iS_ARRAY_TYPE' ? (prevTree[0].__TDIMDESC) : (prevTree[item.paramName] ? prevTree[item.paramName].__TDIMDESC || '' : '');
+                // recurse
+                item.children = this.mapIllustration(item.children, this.getPropByKey(item.paramName === 'THIS_iS_ARRAY_TYPE' ? 0 : item.paramName, prevTree));
+            } else {
+                if(item.paramName === 'THIS_iS_ARRAY_TYPE'){
+                    item.illustration = prevTree[0];
+                }else{
+                    // 正常情况
+                    item.illustration = prevTree[item.paramName] ? prevTree[item.paramName] : '';
+                }
+            }
+            return item;
+        });
+
+        return res;
+    };
 
     // 将输入的json同步至编辑器
     updateJsonToTable(inputVal, tableVal) {
@@ -28,9 +62,17 @@ class JsonFormatter {
             updateStatus = false;
         }
         if (updateStatus) {
+            let prevTree = null;
+            if (tableVal && tableVal.length) {
+                prevTree = DP.getIllustrationMap(tableVal);
+            }
             // 构建新的TableData对象
             ret = this.toTableDS(d);
-            console.log(ret);
+            if (ret.length === 0) {
+                return tableVal;
+            } else {
+                ret = this.mapIllustration(ret, prevTree);
+            }
         } else {
             // rollback
             ret = tableVal;
@@ -187,12 +229,8 @@ class JsonFormatter {
 
     // 可以通过isArray或判断data类型将内容进行封装
     // 封装格式为 [] 或 {}
-    toJsonObj(data, indent, isArray) {
+    toJsonObj(data) {
         return this.toJsonBody(data, 4);
-        // if (data instanceof Array)
-        //     return "[" + this.toJsonBody(data, indent, isArray) + "\n" + "]"
-        // else
-        //     return "{" + this.toJsonBody(data, indent, isArray) + "\n" + "}"
     }
 
     // 对输入data进行区分并返回处理结果
@@ -220,7 +258,7 @@ class JsonFormatter {
                     return false;
                 }
             }
-            return this.toJsonObj(jsonObj, 4)
+            return this.toJsonObj(jsonObj)
         }
     }
 

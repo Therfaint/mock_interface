@@ -4,6 +4,7 @@
 import React from 'react';
 import Input from 'antd/lib/input';
 import Button from 'antd/lib/button';
+const { TextArea } = Input;
 
 class JsonDemo extends React.Component {
 
@@ -29,7 +30,7 @@ class JsonDemo extends React.Component {
                        style={{fontSize: 14, marginLeft: 3}}>{this.state.visible ? '折叠实例' : '展开实例'}</a>
                 </div>
                 {
-                    this.state.visible ? <Input value={this.props.jsonStr} style={{cursor: 'default', resize: 'none'}}
+                    this.state.visible ? <TextArea defaultValue={this.props.jsonStr} style={{cursor: 'default', resize: 'none'}}
                                                 autosize={{minRows: 3}} type="textarea"/> : null
                 }
             </div>

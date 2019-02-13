@@ -139,9 +139,21 @@ export default class apiDbUtil {
         this.API.update({_id: id}, update, function (err, result) {
             if (err) {
                 status.fail.msg = err;
+                callback(status.fail, result);
+            } else {
+                this.wsPush(id, callback);
+            }
+        }.bind(this))
+    }
+
+    wsPush(id, callback){
+        this.API.find({_id: id}, {json: 1, _id: 0}, function (err, result) {
+            if (err) {
+                status.fail.msg = err;
                 callback(status.fail);
             } else {
-                callback(status.success, result);
+                let res = result[0].json;
+                callback(status.success, res);
             }
         })
     }
@@ -158,7 +170,7 @@ export default class apiDbUtil {
                     result.map(item => {
                         let s = true;
                         for (let k in query) {
-                            if (item.paramTable.indexOf(k) === -1 || item.paramTable.indexOf(query[k]) === -1) {
+                            if (item.paramTable.indexOf(k) === -1) {
                                 s = false;
                             }
                         }

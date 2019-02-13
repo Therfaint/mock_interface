@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script type="text/javascript" src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
+    <title>POST</title>
+</head>
+<body>
+
+<script>
+
+    $.ajax({
+        url: 'http://interface.tongdun.me:3000/midas001/security/distribute/update',
+        type: 'POST',
+        data: {
+            principal_type:123,
+            interest_type:456,
+            principal_result:123,
+            interest_result:456
+        },
+        success: function(res){
+            document.documentElement.innerText = res;
+        }
+    })
+</script>
+</body>
+</html>

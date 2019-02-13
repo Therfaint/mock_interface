@@ -136,7 +136,7 @@ export default class proDbUtil{
     }
 
     queryByCode(param, callback){
-        let reg = new RegExp(param);
+        let reg = new RegExp(param, 'i');
         this.PRO.find({projectCode: reg},function (err,result) {
             if(err){
                 status.fail.msg = err;

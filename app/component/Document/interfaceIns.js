@@ -54,7 +54,7 @@ class InterfaceIns extends React.Component {
                                             className={"level-" + item.indent}>{item.paramName ? item.paramName : '-'}</span>
                                         </td>
                                         <td>{item.paramType ? item.paramType : '-'}</td>
-                                        <td>{item.illustration ? item.illustration : '-'}</td>
+                                        <td>{item.illustration ? JSON.stringify(item.illustration) : '-'}</td>
                                     </tr>)
                                 }) : null
                             }
@@ -80,7 +80,7 @@ class InterfaceIns extends React.Component {
                                             className={"level-" + item.indent}>{item.paramName ? item.paramName : '-'}</span>
                                         </td>
                                         <td>{item.paramType ? item.paramType : '-'}</td>
-                                        <td>{item.illustration ? item.illustration : '-'}</td>
+                                        <td>{item.illustration ? JSON.stringify(item.illustration) : '-'}</td>
                                     </tr>)
                                 }) : null
                             }

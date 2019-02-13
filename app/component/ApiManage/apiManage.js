@@ -29,6 +29,8 @@ const dateFormat = 'YYYY-MM-DD HH:mm:ss';
 const Option = Select.Option;
 const TabPane = Tabs.TabPane;
 
+const { TextArea } = Input;
+
 Message.config({
     duration: 2,
 });
@@ -551,7 +553,7 @@ class ApiManage extends React.Component {
         this.showModal();
         let editTableParam, editJson, editTableJson;
         editTableParam = (record.paramTable ? JSON.parse(record.paramTable) : null);
-        editJson = JF.toJsonObj(JSON.parse(record.json), 4);
+        editJson = JF.toJsonObj(JSON.parse(record.json));
         editTableJson = (record.jsonTable ? JSON.parse(record.jsonTable) : null);
         this.setState({
             editModule: record.refModuleId,
@@ -635,11 +637,18 @@ class ApiManage extends React.Component {
     };
 
     // 编辑JSON返回
-    setEditJSON = (e) => {
-        this.setState({
-            editJson: e.target.value,
-            editTableJson: JF.updateJsonToTable(e.target.value, this.state.editTableJson)
-        });
+    setEditJSON = (e, bool) => {
+        if(bool){
+            this.setState({
+                editJson: JF.toJsonObj(e),
+                editTableJson: JF.updateJsonToTable(JSON.stringify(e), this.state.editTableJson)
+            });
+        }else{
+            this.setState({
+                editJson: e.target.value,
+                editTableJson: JF.updateJsonToTable(e.target.value, this.state.editTableJson)
+            });
+        }
     };
 
     // 格式化JSON输入=>对象格式(实质:在字符串加上/n/t等)
@@ -743,7 +752,7 @@ class ApiManage extends React.Component {
         let state = {};
         let isArray = DP.isArray(value);
         if (tar) {
-            state[tar] = JF.toJsonObj(DP.dataSourceFill(value), 1, isArray);
+            state[tar] = JF.toJsonObj(DP.dataSourceFill(value));
         }
         state[table] = value;
         this.setState(state);
@@ -803,6 +812,13 @@ class ApiManage extends React.Component {
 
     componentDidMount = () => {
         this.refs.modal.style.display = 'none';
+        // TW情况下进行更新
+        // if(location.href.indexOf('5b7e82f8e43e364985f7c27d') !== -1){
+        //     const socket = io.connect('http://10.57.17.239:8088');
+        //     socket.on('update', (data) => {
+        //         this.setEditJSON(data, true);
+        //     })
+        // }
     };
 
     onChange = (value) => {
@@ -910,7 +926,7 @@ class ApiManage extends React.Component {
                                                     format={() => this.formatAndCheckJSON('add', this.state.json, true)}
                                                     toTable={() => this.formatAndCheckJSON('add', this.state.json, false)}
                                         />
-                                        <Input value={this.state.json} style={{marginTop: 9}}
+                                        <TextArea value={this.state.json} style={{marginTop: 9}}
                                                placeholder="通过上面的表格进行文档编辑/通过文本输入JSON格式数据后导入表格"
                                                autosize={{minRows: 5, maxRows: 15}} type="textarea"
                                                onChange={(e) => this.setJSON(e)}/>
@@ -999,7 +1015,7 @@ class ApiManage extends React.Component {
                                                     format={() => this.formatAndCheckJSON('edit', this.state.editJson, true)}
                                                     toTable={() => this.formatAndCheckJSON('edit', this.state.editJson, false)}
                                         />
-                                        <Input value={this.state.editJson} style={{marginTop: 9}}
+                                        <TextArea value={this.state.editJson} style={{marginTop: 9}}
                                                autosize={{minRows: 5, maxRows: 15}}
                                                type="textarea" onChange={(e) => this.setEditJSON(e)}/>
                                     </TabPane>

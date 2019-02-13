@@ -9,20 +9,22 @@
 
 import webpack from 'webpack';
 import webpackConfig from '../webpack.config';
+const fs = require('fs');
+const path = require('path');
 
-
+const filePath = path.resolve(__dirname, '../README.md');
 /**
  * Creates application bundles from the source files.
  */
 async function bundle() {
   return new Promise((resolve, reject) => {
-    webpack(webpackConfig).run((err, stats) => {
-      if (err) {
-        return reject(err);
-      }
-
-      return resolve();
-    });
+      fs.appendFile(filePath, 'Hello World', (err) => {
+          if (err) {
+              reject(err);
+          }
+          console.log('bundle success');
+          resolve();
+      });
   });
 }
 
